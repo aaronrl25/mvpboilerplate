@@ -49,6 +49,20 @@ export const followService = {
     await updateDoc(followingRef, { followersCount: increment(-1) });
   },
 
+  // Toggle follow
+  toggleFollow: async (followerId: string, followingId: string): Promise<boolean> => {
+    const followRef = doc(db, FOLLOWS_COLLECTION, `${followerId}_${followingId}`);
+    const followSnap = await getDoc(followRef);
+
+    if (followSnap.exists()) {
+      await followService.unfollowUser(followerId, followingId);
+      return false;
+    } else {
+      await followService.followUser(followerId, followingId);
+      return true;
+    }
+  },
+
   // Check if following
   isFollowing: async (followerId: string, followingId: string): Promise<boolean> => {
     const followRef = doc(db, FOLLOWS_COLLECTION, `${followerId}_${followingId}`);

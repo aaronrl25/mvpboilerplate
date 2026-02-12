@@ -8,9 +8,11 @@ import {
   startAt,
   endAt,
   doc,
-  getDoc
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { Post } from './feedService';
 
 export interface UserProfile {
   uid: string;
@@ -20,9 +22,12 @@ export interface UserProfile {
   createdAt: string;
   bio?: string;
   location?: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 const USERS_COLLECTION = 'users';
+const POSTS_COLLECTION = 'posts';
 
 export const userService = {
   // Search users by display name or email
@@ -63,6 +68,37 @@ export const userService = {
     } else {
       return null;
     }
+  },
+
+  // Subscribe to user details by UID
+  subscribeToUser: (uid: string, callback: (user: UserProfile | null) => void) => {
+    const userRef = doc(db, USERS_COLLECTION, uid);
+    return onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        callback(doc.data() as UserProfile);
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  // Get user's posts
+  getUserPosts: (uid: string, callback: (posts: Post[]) => void) => {
+    const postsRef = collection(db, POSTS_COLLECTION);
+    const q = query(
+      postsRef,
+      where('userId', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
+      callback(posts);
+    });
   },
 
   // Get all users (limited)

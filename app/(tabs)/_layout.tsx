@@ -38,6 +38,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="movies"
+        options={{
+          title: 'Movies',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="film.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="ai"
         options={{
           title: 'AI',

@@ -6,10 +6,9 @@ import {
   TouchableOpacity, 
   View, 
   ActivityIndicator, 
-  Modal,
-  ScrollView,
   Image
 } from 'react-native';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -24,8 +23,6 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followLoading, setFollowLoading] = useState(false);
   
@@ -99,15 +96,14 @@ export default function SearchScreen() {
     }
   };
 
-  const openUserDetails = (user: UserProfile) => {
-    setSelectedUser(user);
-    setModalVisible(true);
+  const navigateToProfile = (uid: string) => {
+    router.push({ pathname: '/user/[uid]', params: { uid } });
   };
 
   const renderUserItem = ({ item }: { item: UserProfile }) => (
     <TouchableOpacity 
       style={[styles.userItem, { borderBottomColor: themeColors.icon + '20' }]} 
-      onPress={() => openUserDetails(item)}
+      onPress={() => navigateToProfile(item.uid)}
     >
       <View style={styles.avatarPlaceholder}>
         {item.photoURL ? (
@@ -177,76 +173,6 @@ export default function SearchScreen() {
           }
         />
       )}
-
-      {/* User Details Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <ThemedText type="link">Close</ThemedText>
-              </TouchableOpacity>
-              <ThemedText type="subtitle">User Details</ThemedText>
-              <View style={{ width: 40 }} />
-            </View>
-
-            {selectedUser && (
-              <ScrollView contentContainerStyle={styles.modalBody}>
-                <View style={styles.largeAvatarSection}>
-                  <View style={styles.largeAvatarPlaceholder}>
-                    {selectedUser.photoURL ? (
-                      <Image source={{ uri: selectedUser.photoURL }} style={styles.largeAvatar} />
-                    ) : (
-                      <IconSymbol name="person.fill" size={60} color="#fff" />
-                    )}
-                  </View>
-                  <ThemedText type="title" style={styles.modalUserName}>
-                    {selectedUser.displayName}
-                  </ThemedText>
-                  <ThemedText style={styles.modalUserEmail}>{selectedUser.email}</ThemedText>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Information</ThemedText>
-                  <View style={styles.infoRow}>
-                    <IconSymbol name="paperplane.fill" size={20} color={themeColors.icon} />
-                    <View style={styles.infoText}>
-                      <ThemedText type="defaultSemiBold">Email</ThemedText>
-                      <ThemedText>{selectedUser.email}</ThemedText>
-                    </View>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <IconSymbol name="info.circle.fill" size={20} color={themeColors.icon} />
-                    <View style={styles.infoText}>
-                      <ThemedText type="defaultSemiBold">User ID</ThemedText>
-                      <ThemedText numberOfLines={1}>{selectedUser.uid}</ThemedText>
-                    </View>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <IconSymbol name="bell.fill" size={20} color={themeColors.icon} />
-                    <View style={styles.infoText}>
-                      <ThemedText type="defaultSemiBold">Joined</ThemedText>
-                      <ThemedText>{new Date(selectedUser.createdAt).toLocaleDateString()}</ThemedText>
-                    </View>
-                  </View>
-                </View>
-
-                {selectedUser.bio && (
-                  <View style={styles.detailSection}>
-                    <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Bio</ThemedText>
-                    <ThemedText style={styles.bioText}>{selectedUser.bio}</ThemedText>
-                  </View>
-                )}
-              </ScrollView>
-            )}
-          </ThemedView>
-        </View>
-      </Modal>
     </ThemedView>
   );
 }

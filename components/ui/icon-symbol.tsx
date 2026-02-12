@@ -34,6 +34,13 @@ const MAPPING = {
   'plus': 'add',
   'message.fill': 'message',
   'sparkles': 'auto-awesome',
+  'heart.fill': 'favorite',
+  'heart': 'favorite-border',
+  'bubble.left.fill': 'chat-bubble',
+  'photo.fill': 'photo',
+  'video.fill': 'videocam',
+  'map.fill': 'map',
+  'film.fill': 'movie',
 } as IconMapping;
 
 /**
