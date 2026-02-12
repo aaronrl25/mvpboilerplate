@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Movieapp",
-    "slug": "Movieapp",
+    "name": "CareerConnect",
+    "slug": "careerconnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "movieapp",
+    "scheme": "careerconnect",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

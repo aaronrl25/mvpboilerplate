@@ -136,15 +136,16 @@ export default function SearchScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText type="title">Search Users</ThemedText>
-      </View>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">Networking</ThemedText>
+        <ThemedText style={styles.subtitle}>Connect with other professionals</ThemedText>
+      </ThemedView>
 
       <View style={[styles.searchContainer, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
         <IconSymbol name="magnifyingglass" size={20} color={themeColors.icon} />
         <TextInput
           style={[styles.searchInput, { color: themeColors.text }]}
-          placeholder="Search by name..."
+          placeholder="Search for people, skills, or companies..."
           placeholderTextColor={themeColors.icon}
           value={searchQuery}
           onChangeText={handleSearch}
@@ -184,7 +185,12 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
   searchContainer: {
     flexDirection: 'row',

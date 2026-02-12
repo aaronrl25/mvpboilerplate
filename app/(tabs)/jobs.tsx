@@ -1,78 +1,82 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
-import { MovieCard } from '@/components/MovieCard';
+import { JobCard } from '@/components/JobCard';
 import { SearchBar } from '@/components/SearchBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAppSelector } from '@/hooks/useRedux';
-import { Movie, searchMovies } from '@/services/api';
+import { Job, jobService } from '@/services/jobService';
 
-export default function MoviesScreen() {
-  const [movies, setMovies] = useState<Movie[]>([]);
+export default function JobsScreen() {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
   const { user } = useAppSelector((state) => state.auth);
 
+  useEffect(() => {
+    loadInitialJobs();
+  }, []);
+
+  const loadInitialJobs = async () => {
+    try {
+      setLoading(true);
+      const data = await jobService.getJobs();
+      setJobs(data);
+    } catch (err) {
+      setError('Failed to load jobs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = async (query: string) => {
-    if (!query.trim()) return;
-    
     try {
       setLoading(true);
       setSearchQuery(query);
       setError(null);
-      const response = await searchMovies(query);
-      
-      if (response.Response === 'False') {
-        setError(response.Error || 'No movies found');
-        setMovies([]);
-      } else {
-        setMovies(response.Search);
-      }
+      const results = await jobService.searchJobs(query);
+      setJobs(results);
     } catch (err) {
-      setError('Failed to search movies');
+      setError('Failed to search jobs');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderItem = ({ item }: { item: Movie }) => <MovieCard movie={item} />;
+  const renderItem = ({ item }: { item: Job }) => <JobCard job={item} />;
 
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Movies</ThemedText>
+        <ThemedText type="title">Search Jobs</ThemedText>
+        <ThemedText style={styles.subtitle}>Find your next career opportunity</ThemedText>
       </ThemedView>
       
       <SearchBar onSearch={handleSearch} />
       
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color="#007AFF" />
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
           <ThemedText>{error}</ThemedText>
         </View>
-      ) : movies.length === 0 && searchQuery ? (
+      ) : jobs.length === 0 ? (
         <View style={styles.centerContainer}>
-          <ThemedText>No movies found for "{searchQuery}"</ThemedText>
-        </View>
-      ) : movies.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <ThemedText>Search for movies to get started</ThemedText>
+          <ThemedText>No jobs found for "{searchQuery}"</ThemedText>
         </View>
       ) : (
         <FlatList
-          data={movies}
+          data={jobs}
           renderItem={renderItem}
-          keyExtractor={(item) => item.imdbID}
-          numColumns={2}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </ThemedView>
@@ -88,6 +92,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 10,
   },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -95,9 +104,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   listContent: {
-    padding: 10,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
+    paddingVertical: 10,
   },
 });

@@ -14,15 +14,20 @@ export interface ChatMessage {
 export const aiService = {
   sendMessage: async (messages: { role: string; content: string }[]): Promise<string> => {
     if (OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY') {
-      return "Please configure your OpenAI API Key in services/aiService.ts to use the chatbot.";
+      return "Hello! I'm your Career Assistant. I can help you with job search tips, resume advice, and interview preparation. (Note: OpenAI API Key not configured)";
     }
+
+    const systemMessage = {
+      role: 'system',
+      content: 'You are a professional career coach and job search assistant. Your goal is to provide helpful, encouraging, and practical advice on job searching, resume building, interview preparation, and career growth. Keep your answers concise and professional.'
+    };
 
     try {
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
           model: 'gpt-3.5-turbo',
-          messages: messages,
+          messages: [systemMessage, ...messages],
         },
         {
           headers: {

@@ -22,7 +22,7 @@ export default function ChatScreen() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello! I am your AI assistant. How can I help you today?',
+      content: "Hi! I'm your Career Coach. How can I help you with your job search today?",
       createdAt: new Date(),
     },
   ]);
@@ -131,7 +131,7 @@ export default function ChatScreen() {
       <View style={styles.header}>
         <IconSymbol name="sparkles" size={24} color={themeColors.tint} />
         <ThemedText type="title" style={styles.headerTitle}>
-          AI Assistant
+          Career Advice
         </ThemedText>
       </View>
 

@@ -243,11 +243,11 @@ export default function FeedScreen() {
         <View style={styles.inputRow}>
           <TextInput
             style={[styles.postInput, { color: themeColors.text }]}
-            placeholder="What's on your mind?"
+            placeholder="Share an update or job opportunity..."
             placeholderTextColor={themeColors.icon}
-            multiline
             value={postContent}
             onChangeText={setPostContent}
+            multiline
           />
           <TouchableOpacity 
             style={[styles.postButton, { backgroundColor: themeColors.tint }]} 

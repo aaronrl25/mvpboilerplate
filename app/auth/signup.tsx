@@ -55,7 +55,7 @@ export default function SignupScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>
-        Movies App
+        CareerConnect
       </ThemedText>
       <ThemedText type="subtitle" style={styles.subtitle}>
         Create a new account
