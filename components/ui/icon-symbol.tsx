@@ -32,6 +32,8 @@ const MAPPING = {
   'circle': 'radio-button-unchecked',
   'trash.fill': 'delete',
   'plus': 'add',
+  'message.fill': 'message',
+  'sparkles': 'auto-awesome',
 } as IconMapping;
 
 /**
