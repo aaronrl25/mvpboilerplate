@@ -14,9 +14,9 @@ export default function LoginScreen() {
   const { loading, error, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    // If user is already logged in, redirect to home
+    // If user is already logged in, redirect to tabs
     if (user) {
-      router.replace('/home');
+      router.replace('/(tabs)');
     }
   }, [user]);
 

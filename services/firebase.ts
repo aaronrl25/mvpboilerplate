@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -17,10 +19,24 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Authentication functions
-export const registerUser = (email: string, password: string) => {
-  return createUserWithEmailAndPassword(auth, email, password);
+export const registerUser = async (email: string, password: string) => {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
+  
+  // Save user data to Firestore
+  await setDoc(doc(db, 'users', user.uid), {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.email?.split('@')[0] || 'User',
+    createdAt: new Date().toISOString(),
+    photoURL: user.photoURL || '',
+  });
+  
+  return userCredential;
 };
 
 export const loginUser = (email: string, password: string) => {
@@ -35,4 +51,4 @@ export const subscribeToAuthChanges = (callback: (user: User | null) => void) =>
   return onAuthStateChanged(auth, callback);
 };
 
-export { auth };
+export { auth, db, storage };

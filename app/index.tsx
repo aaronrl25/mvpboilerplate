@@ -6,5 +6,5 @@ export default function Index() {
   const { user } = useAppSelector((state) => state.auth);
 
   // Redirect based on authentication status
-  return user ? <Redirect href="/home" /> : <Redirect href="/auth" />;
+  return user ? <Redirect href="/(tabs)" /> : <Redirect href="/auth" />;
 }
