@@ -9,27 +9,63 @@ import {
   endAt,
   doc,
   getDoc,
-  onSnapshot
+  onSnapshot,
+  setDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Post } from './feedService';
 
+export type UserRole = 'employer' | 'seeker';
+export type SubscriptionPlanId = 'free' | 'pro' | 'enterprise';
+
 export interface UserProfile {
   uid: string;
   email: string;
-  displayName: string;
+  displayName?: string;
   photoURL?: string;
-  createdAt: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   bio?: string;
   location?: string;
-  followersCount?: number;
-  followingCount?: number;
+  title?: string;
+  role: UserRole;
+  avatarUrl?: string; // Matching schema request
+  resumeUrl?: string;
+  resumeName?: string;
+  resumeText?: string;
+  resumeUpdatedAt?: Timestamp;
+  subscriptionPlan?: SubscriptionPlanId;
+  subscriptionStatus?: 'active' | 'canceled' | 'past_due';
+  subscriptionEndDate?: Timestamp;
+  locationData?: {
+    latitude: number;
+    longitude: number;
+    city?: string;
+    region?: string;
+    country?: string;
+    address?: string;
+    lastUpdated?: Timestamp;
+  };
 }
 
 const USERS_COLLECTION = 'users';
 const POSTS_COLLECTION = 'posts';
 
 export const userService = {
+  // Update or create user profile
+  updateProfile: async (uid: string, data: Partial<UserProfile>): Promise<void> => {
+    try {
+      const userRef = doc(db, USERS_COLLECTION, uid);
+      await setDoc(userRef, {
+        ...data,
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
   // Search users by display name or email
   searchUsers: async (searchTerm: string): Promise<UserProfile[]> => {
     if (!searchTerm) return [];
@@ -59,7 +95,7 @@ export const userService = {
   },
 
   // Get user details by UID
-  getUserById: async (uid: string): Promise<UserProfile | null> => {
+  getUserProfile: async (uid: string): Promise<UserProfile | null> => {
     const userRef = doc(db, USERS_COLLECTION, uid);
     const userSnap = await getDoc(userRef);
     
@@ -68,6 +104,11 @@ export const userService = {
     } else {
       return null;
     }
+  },
+
+  // Get user details by UID (legacy support)
+  getUserById: async (uid: string): Promise<UserProfile | null> => {
+    return userService.getUserProfile(uid);
   },
 
   // Subscribe to user details by UID

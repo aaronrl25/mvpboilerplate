@@ -41,6 +41,18 @@ const MAPPING = {
   'video.fill': 'videocam',
   'map.fill': 'map',
   'film.fill': 'movie',
+  'doc.fill': 'description',
+  'trash': 'delete',
+  'xmark': 'close',
+  'envelope.fill': 'email',
+  'mappin.and.ellipse': 'place',
+  'briefcase.fill': 'work',
+  'dollarsign.circle': 'monetization-on',
+  'arrow.up.doc': 'upload-file',
+  'person.2.fill': 'group',
+  'bookmark.fill': 'bookmark',
+  'bookmark': 'bookmark-border',
+  'slider.horizontal.3': 'tune',
 } as IconMapping;
 
 /**

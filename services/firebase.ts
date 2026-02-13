@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { UserRole } from './userService';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -23,7 +24,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Authentication functions
-export const registerUser = async (email: string, password: string) => {
+export const registerUser = async (email: string, password: string, role: UserRole = 'seeker') => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
   
@@ -34,13 +35,23 @@ export const registerUser = async (email: string, password: string) => {
     displayName: user.email?.split('@')[0] || 'User',
     createdAt: new Date().toISOString(),
     photoURL: user.photoURL || '',
+    role: role,
   });
   
   return userCredential;
 };
 
-export const loginUser = (email: string, password: string) => {
-  return signInWithEmailAndPassword(auth, email, password);
+export const getUserData = async (uid: string) => {
+  const userDoc = await getDoc(doc(db, 'users', uid));
+  if (userDoc.exists()) {
+    return userDoc.data();
+  }
+  return null;
+};
+
+export const loginUser = async (email: string, password: string) => {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  return userCredential;
 };
 
 export const logoutUser = () => {

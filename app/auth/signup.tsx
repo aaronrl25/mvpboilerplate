@@ -11,6 +11,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'employer' | 'seeker'>('seeker');
   const dispatch = useAppDispatch();
   const { loading, error, user } = useAppSelector((state) => state.auth);
 
@@ -45,7 +46,7 @@ export default function SignupScreen() {
       return;
     }
 
-    dispatch(register({ email, password }));
+    dispatch(register({ email, password, role }));
   };
 
   const navigateToLogin = () => {
@@ -60,6 +61,25 @@ export default function SignupScreen() {
       <ThemedText type="subtitle" style={styles.subtitle}>
         Create a new account
       </ThemedText>
+
+      <ThemedView style={styles.roleContainer}>
+        <TouchableOpacity 
+          style={[styles.roleButton, role === 'seeker' && styles.roleButtonActive]} 
+          onPress={() => setRole('seeker')}
+        >
+          <ThemedText style={[styles.roleButtonText, role === 'seeker' && styles.roleButtonTextActive]}>
+            Job Seeker
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.roleButton, role === 'employer' && styles.roleButtonActive]} 
+          onPress={() => setRole('employer')}
+        >
+          <ThemedText style={[styles.roleButtonText, role === 'employer' && styles.roleButtonTextActive]}>
+            Employer
+          </ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
 
       <TextInput
         style={styles.input}
@@ -143,5 +163,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 20,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 10,
+  },
+  roleButton: {
+    flex: 1,
+    height: 45,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  roleButtonActive: {
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
+  },
+  roleButtonText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  roleButtonTextActive: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

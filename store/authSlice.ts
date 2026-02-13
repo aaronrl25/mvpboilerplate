@@ -1,9 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from 'firebase/auth';
-import { loginUser, logoutUser, registerUser } from '../services/firebase';
+import { getUserData, loginUser, logoutUser, registerUser } from '../services/firebase';
+import { UserProfile } from '../services/userService';
 
 interface AuthState {
-  user: User | null;
+  user: (User & Partial<UserProfile>) | null;
   loading: boolean;
   error: string | null;
 }
@@ -19,7 +20,8 @@ export const login = createAsyncThunk(
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const userCredential = await loginUser(email, password);
-      return userCredential.user;
+      const userData = await getUserData(userCredential.user.uid);
+      return { ...userCredential.user, ...userData };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Login failed');
     }
@@ -28,10 +30,11 @@ export const login = createAsyncThunk(
 
 export const register = createAsyncThunk(
   'auth/register',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async ({ email, password, role }: { email: string; password: string; role: 'employer' | 'seeker' }, { rejectWithValue }) => {
     try {
-      const userCredential = await registerUser(email, password);
-      return userCredential.user;
+      const userCredential = await registerUser(email, password, role);
+      const userData = await getUserData(userCredential.user.uid);
+      return { ...userCredential.user, ...userData };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Registration failed');
     }
@@ -51,13 +54,18 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User | null>) => {
+    setUser: (state, action: PayloadAction<any>) => {
       state.user = action.payload;
       state.loading = false;
       state.error = null;
     },
     clearError: (state) => {
       state.error = null;
+    },
+    updateAuthProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload } as any;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -67,7 +75,7 @@ const authSlice = createSlice({
       state.error = null;
     });
     builder.addCase(login.fulfilled, (state, action) => {
-      state.user = action.payload;
+      state.user = action.payload as any;
       state.loading = false;
       state.error = null;
     });
@@ -82,7 +90,7 @@ const authSlice = createSlice({
       state.error = null;
     });
     builder.addCase(register.fulfilled, (state, action) => {
-      state.user = action.payload;
+      state.user = action.payload as any;
       state.loading = false;
       state.error = null;
     });
@@ -108,5 +116,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearError } = authSlice.actions;
+export const { setUser, clearError, updateAuthProfile } = authSlice.actions;
 export default authSlice.reducer;
