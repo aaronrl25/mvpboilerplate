@@ -25,7 +25,12 @@ import { Job, jobService } from '@/services/jobService';
 import { subscriptionService, SUBSCRIPTION_PLANS } from '@/services/subscriptionService';
 import { locationService, LocationData } from '@/services/locationService';
 
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 export default function ProfileScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -278,65 +283,75 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <ThemedView style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Profile</ThemedText>
-        <TouchableOpacity onPress={() => setEditModalVisible(true)}>
-          <ThemedText style={styles.editButtonText}>Edit</ThemedText>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <ThemedText type="title" style={{ color: theme.text }}>Profile</ThemedText>
+        <TouchableOpacity 
+          style={[styles.headerEditButton, { backgroundColor: theme.surface, ...Shadows.sm }]}
+          onPress={() => setEditModalVisible(true)}
+        >
+          <IconSymbol name="pencil" size={18} color={theme.primary} />
         </TouchableOpacity>
-      </ThemedView>
+      </View>
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.avatarSection}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.avatarSection, { backgroundColor: theme.surface, ...Shadows.sm }]}>
           <Image 
             source={{ uri: profileData?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}` }} 
-            style={styles.avatar} 
+            style={[styles.avatar, { borderColor: theme.background }]} 
           />
-          <ThemedText type="subtitle" style={styles.userName}>
-            {profileData?.displayName || user?.email?.split('@')[0]}
-          </ThemedText>
-          <ThemedText style={styles.userTitle}>
-            {profileData?.title || 'No title set'}
-          </ThemedText>
-          <View style={styles.roleBadge}>
-            <ThemedText style={styles.roleText}>
-              {profileData?.role?.toUpperCase() || 'JOB SEEKER'}
+          <View style={styles.avatarInfo}>
+            <ThemedText style={[styles.userName, { color: theme.text }]}>
+              {profileData?.displayName || user?.email?.split('@')[0]}
             </ThemedText>
+            <ThemedText style={[styles.userTitle, { color: theme.textSecondary }]}>
+              {profileData?.title || 'No title set'}
+            </ThemedText>
+            <View style={[styles.roleBadge, { backgroundColor: theme.primary + '15' }]}>
+              <ThemedText style={[styles.roleText, { color: theme.primary }]}>
+                {profileData?.role?.toUpperCase() || 'JOB SEEKER'}
+              </ThemedText>
+            </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>About</ThemedText>
-          <ThemedText style={styles.bioText}>
+        <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.text, marginBottom: Spacing.md }]}>About</ThemedText>
+          <ThemedText style={[styles.bioText, { color: theme.textSecondary }]}>
             {profileData?.bio || 'No bio provided yet.'}
           </ThemedText>
         </View>
 
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
           <View style={styles.sectionHeader}>
-            <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Location Preference</ThemedText>
+            <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>Location Preference</ThemedText>
             <TouchableOpacity onPress={updateLocation} disabled={updatingLocation}>
               {updatingLocation ? (
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={theme.primary} />
               ) : (
-                <ThemedText style={styles.editButtonText}>Update</ThemedText>
+                <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>Update</ThemedText>
               )}
             </TouchableOpacity>
           </View>
-          <View style={styles.locationCard}>
-            <IconSymbol name="mappin.and.ellipse" size={20} color="#007AFF" />
+          <View style={[styles.locationCard, { backgroundColor: theme.background }]}>
+            <View style={[styles.locationIconContainer, { backgroundColor: theme.primary + '15' }]}>
+              <IconSymbol name="mappin.and.ellipse" size={20} color={theme.primary} />
+            </View>
             <View style={styles.locationInfo}>
-              <ThemedText style={styles.locationCity}>
+              <ThemedText style={[styles.locationCity, { color: theme.text }]}>
                 {profileData?.locationData?.city || 'No location set'}
               </ThemedText>
-              <ThemedText style={styles.locationAddress}>
+              <ThemedText style={[styles.locationAddress, { color: theme.textTertiary }]}>
                 {profileData?.locationData?.address || 'Update to get nearby suggestions'}
               </ThemedText>
             </View>
@@ -344,11 +359,11 @@ export default function ProfileScreen() {
         </View>
 
         {isEmployer && (
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
             <View style={styles.sectionHeader}>
-              <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Employer Dashboard</ThemedText>
+              <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>Employer Dashboard</ThemedText>
               <TouchableOpacity onPress={() => router.push('/employer/stats')}>
-                <ThemedText style={styles.editButtonText}>View Stats</ThemedText>
+                <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>View Stats</ThemedText>
               </TouchableOpacity>
             </View>
             <TouchableOpacity 
@@ -368,19 +383,19 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.statsPreviewDivider} />
               <View style={styles.statsPreviewItem}>
-                <IconSymbol name="chart.bar.fill" size={24} color="#007AFF" />
-                <ThemedText style={styles.statsPreviewLabel}>Full Stats</ThemedText>
+                <IconSymbol name="chart.bar.fill" size={20} color={theme.primary} />
+                <ThemedText style={styles.statsPreviewLabel}>Analytics</ThemedText>
               </View>
             </TouchableOpacity>
           </View>
         )}
 
         {isEmployer && (
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
             <View style={styles.sectionHeader}>
-              <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Subscription Plan</ThemedText>
+              <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>Subscription Plan</ThemedText>
               <TouchableOpacity onPress={() => router.push('/employer/subscription')}>
-                <ThemedText style={styles.editButtonText}>Manage</ThemedText>
+                <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>Manage</ThemedText>
               </TouchableOpacity>
             </View>
             <View style={styles.planInfoCard}>
@@ -398,48 +413,48 @@ export default function ProfileScreen() {
         )}
 
         {isEmployer ? (
-           <View style={styles.section}>
+           <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
              <View style={styles.sectionHeader}>
-               <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>My Job Postings</ThemedText>
+               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>My Job Postings</ThemedText>
                <TouchableOpacity onPress={() => router.push('/job/create')}>
-                 <ThemedText style={styles.editButtonText}>Create New</ThemedText>
+                 <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>Create New</ThemedText>
                </TouchableOpacity>
              </View>
              {loadingJobs ? (
-               <ActivityIndicator color="#007AFF" />
+               <ActivityIndicator color={theme.primary} />
              ) : employerJobs.length > 0 ? (
                employerJobs.map((job) => (
                  <TouchableOpacity 
                    key={job.id} 
-                   style={styles.appCard}
+                   style={[styles.appCard, { backgroundColor: theme.background }]}
                    onPress={() => router.push(`/employer/applications/${job.id}`)}
                  >
                    <View style={styles.appInfo}>
-                     <ThemedText style={styles.appTitle}>{job.title}</ThemedText>
-                     <ThemedText style={styles.appCompany}>{job.location}{job.remote ? ' (Remote)' : ''}</ThemedText>
-                     <ThemedText style={styles.appDate}>Posted: {formatDate(job.postedAt)}</ThemedText>
+                     <ThemedText style={[styles.appTitle, { color: theme.text }]}>{job.title}</ThemedText>
+                     <ThemedText style={[styles.appCompany, { color: theme.textSecondary }]}>{job.location}{job.remote ? ' (Remote)' : ''}</ThemedText>
+                     <ThemedText style={[styles.appDate, { color: theme.textTertiary }]}>Posted: {formatDate(job.postedAt)}</ThemedText>
                    </View>
-                   <IconSymbol name="chevron.right" size={20} color="#999" />
+                   <IconSymbol name="chevron.right" size={20} color={theme.textTertiary} />
                  </TouchableOpacity>
                ))
              ) : (
-               <ThemedText style={styles.emptyText}>You haven't posted any jobs yet.</ThemedText>
+               <ThemedText style={[styles.emptyText, { color: theme.textTertiary }]}>You haven't posted any jobs yet.</ThemedText>
              )}
            </View>
          ) : (
            <>
-             <View style={styles.section}>
-               <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Saved Job Alerts</ThemedText>
+             <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+               <ThemedText style={[styles.sectionTitle, { color: theme.text, marginBottom: Spacing.md }]}>Saved Job Alerts</ThemedText>
                {loadingSavedSearches ? (
-                 <ActivityIndicator color="#007AFF" />
+                 <ActivityIndicator color={theme.primary} />
                ) : savedSearches.length > 0 ? (
                  savedSearches.map((search) => (
-                   <View key={search.id} style={styles.searchAlertCard}>
+                   <View key={search.id} style={[styles.searchAlertCard, { backgroundColor: theme.background }]}>
                      <View style={styles.searchAlertInfo}>
-                       <ThemedText style={styles.searchAlertTitle}>
+                       <ThemedText style={[styles.searchAlertTitle, { color: theme.text }]}>
                          {search.query || 'All Jobs'}
                        </ThemedText>
-                       <ThemedText style={styles.searchAlertMeta}>
+                       <ThemedText style={[styles.searchAlertMeta, { color: theme.textSecondary }]}>
                          {[
                            search.filters?.location,
                            search.filters?.type,
@@ -453,21 +468,21 @@ export default function ProfileScreen() {
                    </View>
                  ))
                ) : (
-                 <ThemedText style={styles.emptyText}>No saved searches yet.</ThemedText>
+                 <ThemedText style={[styles.emptyText, { color: theme.textTertiary }]}>No saved searches yet.</ThemedText>
                )}
              </View>
 
-             <View style={styles.section}>
-               <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>My Applications</ThemedText>
+             <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+               <ThemedText style={[styles.sectionTitle, { color: theme.text, marginBottom: Spacing.md }]}>My Applications</ThemedText>
                {loadingApps ? (
-                 <ActivityIndicator color="#007AFF" />
+                 <ActivityIndicator color={theme.primary} />
                ) : applications.length > 0 ? (
                  applications.map((app) => (
-                   <View key={app.id} style={styles.appCard}>
+                   <View key={app.id} style={[styles.appCard, { backgroundColor: theme.background }]}>
                      <View style={styles.appInfo}>
-                       <ThemedText style={styles.appTitle}>{app.jobTitle}</ThemedText>
-                       <ThemedText style={styles.appCompany}>{app.company}</ThemedText>
-                       <ThemedText style={styles.appDate}>{formatDate(app.createdAt)}</ThemedText>
+                       <ThemedText style={[styles.appTitle, { color: theme.text }]}>{app.jobTitle}</ThemedText>
+                       <ThemedText style={[styles.appCompany, { color: theme.textSecondary }]}>{app.company}</ThemedText>
+                       <ThemedText style={[styles.appDate, { color: theme.textTertiary }]}>{formatDate(app.createdAt)}</ThemedText>
                      </View>
                      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(app.status) }]}>
                        <ThemedText style={styles.statusText}>{app.status}</ThemedText>
@@ -475,32 +490,34 @@ export default function ProfileScreen() {
                    </View>
                  ))
                ) : (
-                 <ThemedText style={styles.emptyText}>You haven't applied to any jobs yet.</ThemedText>
+                 <ThemedText style={[styles.emptyText, { color: theme.textTertiary }]}>You haven't applied to any jobs yet.</ThemedText>
                )}
              </View>
 
-             <View style={styles.section}>
+             <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
                <View style={styles.sectionHeader}>
-                 <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Resume</ThemedText>
+                 <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>My Resume</ThemedText>
                  <TouchableOpacity onPress={handleUploadResume} disabled={uploadingResume}>
-                   <ThemedText style={styles.editButtonText}>
+                   <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>
                      {profileData?.resumeUrl ? 'Replace' : 'Upload'}
                    </ThemedText>
                  </TouchableOpacity>
                </View>
                
                {uploadingResume ? (
-                 <ActivityIndicator style={{ marginVertical: 10 }} color="#007AFF" />
+                 <ActivityIndicator style={{ marginVertical: Spacing.md }} color={theme.primary} />
                ) : profileData?.resumeUrl ? (
-                 <View style={styles.resumeCard}>
+                 <View style={[styles.resumeCard, { backgroundColor: theme.background }]}>
+                   <View style={[styles.resumeIconContainer, { backgroundColor: '#FF3B3015' }]}>
+                     <IconSymbol name="doc.fill" size={24} color="#FF3B30" />
+                   </View>
                    <View style={styles.resumeInfo}>
-                     <IconSymbol name="doc.fill" size={24} color="#007AFF" />
                      <View style={styles.resumeTextContainer}>
-                       <ThemedText style={styles.resumeName} numberOfLines={1}>
-                         {profileData.resumeName || 'My Resume'}
+                       <ThemedText style={[styles.resumeName, { color: theme.text }]} numberOfLines={1}>
+                         {profileData.resumeName || 'Resume.pdf'}
                        </ThemedText>
-                       <ThemedText style={styles.resumeDate}>
-                         Uploaded: {formatDate(profileData.resumeUpdatedAt)}
+                       <ThemedText style={[styles.resumeDate, { color: theme.textTertiary }]}>
+                         Updated {formatDate(profileData.resumeUpdatedAt)}
                        </ThemedText>
                      </View>
                    </View>
@@ -509,25 +526,24 @@ export default function ProfileScreen() {
                    </TouchableOpacity>
                  </View>
                ) : (
-                 <ThemedText style={styles.emptyText}>No resume uploaded yet</ThemedText>
+                 <TouchableOpacity 
+                   style={[styles.resumeCard, { backgroundColor: theme.background, borderStyle: 'dashed', borderWidth: 1, borderColor: theme.border, justifyContent: 'center' }]}
+                   onPress={handleUploadResume}
+                 >
+                   <IconSymbol name="plus.circle" size={24} color={theme.textTertiary} />
+                   <ThemedText style={[styles.emptyText, { color: theme.textTertiary, marginLeft: 8 }]}>Upload your resume</ThemedText>
+                 </TouchableOpacity>
                )}
              </View>
            </>
          )}
 
-        <View style={styles.section}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Account Information</ThemedText>
-          <View style={styles.infoRow}>
-            <IconSymbol name="envelope.fill" size={20} color="#666" />
-            <View style={styles.infoText}>
-              <ThemedText type="defaultSemiBold">Email</ThemedText>
-              <ThemedText>{user?.email}</ThemedText>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <ThemedText style={styles.logoutText}>Logout</ThemedText>
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: theme.surface, borderColor: '#FF3B30', borderWidth: 1 }]} 
+          onPress={handleLogout}
+        >
+          <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#FF3B30" />
+          <ThemedText style={[styles.logoutText, { color: '#FF3B30' }]}>Sign Out</ThemedText>
         </TouchableOpacity>
       </ScrollView>
 
@@ -536,45 +552,55 @@ export default function ProfileScreen() {
         visible={editModalVisible}
         animationType="slide"
         transparent={true}
+        onRequestClose={() => setEditModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalContent}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="subtitle">Edit Profile</ThemedText>
+              <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>Edit Profile</ThemedText>
               <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                <IconSymbol name="xmark" size={24} color="#666" />
+                <IconSymbol name="xmark" size={24} color={theme.icon} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalForm}>
-              <ThemedText style={styles.inputLabel}>Display Name</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Full Name"
-              />
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalForm}>
+              <View>
+                <ThemedText style={[styles.inputLabel, { color: theme.textSecondary }]}>Full Name</ThemedText>
+                <TextInput
+                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Your Name"
+                  placeholderTextColor={theme.textTertiary}
+                />
+              </View>
 
-              <ThemedText style={styles.inputLabel}>Professional Title</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={editTitle}
-                onChangeText={setEditTitle}
-                placeholder="e.g. Senior Software Engineer"
-              />
+              <View>
+                <ThemedText style={[styles.inputLabel, { color: theme.textSecondary }]}>Professional Title</ThemedText>
+                <TextInput
+                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
+                  value={editTitle}
+                  onChangeText={setEditTitle}
+                  placeholder="e.g. Senior Product Designer"
+                  placeholderTextColor={theme.textTertiary}
+                />
+              </View>
 
-              <ThemedText style={styles.inputLabel}>Bio</ThemedText>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={editBio}
-                onChangeText={setEditBio}
-                placeholder="Tell us about yourself..."
-                multiline
-                numberOfLines={4}
-              />
+              <View>
+                <ThemedText style={[styles.inputLabel, { color: theme.textSecondary }]}>Bio</ThemedText>
+                <TextInput
+                  style={[styles.input, styles.textArea, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
+                  value={editBio}
+                  onChangeText={setEditBio}
+                  placeholder="Tell us about yourself..."
+                  placeholderTextColor={theme.textTertiary}
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
 
               <TouchableOpacity 
-                style={styles.saveButton} 
+                style={[styles.saveButton, { backgroundColor: theme.primary, opacity: saving ? 0.7 : 1, ...Shadows.md }]}
                 onPress={handleSaveProfile}
                 disabled={saving}
               >
@@ -602,96 +628,193 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    paddingTop: 60,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerEditButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  avatarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.xl,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+  },
+  avatarInfo: {
+    flex: 1,
+    marginLeft: Spacing.lg,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '700', 
+    marginBottom: 4,
+  },
+  userTitle: {
+    fontSize: 15,
+    marginBottom: 8,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.pill,
+  },
+  roleText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  section: {
+    padding: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.lg,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 10,
-  },
-  editButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#2196F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    textTransform: 'capitalize',
-  },
-  userTitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 12,
-  },
-  userEmail: {
-    opacity: 0.6,
-  },
-  roleBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  roleText: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  section: {
-    marginBottom: 25,
-    backgroundColor: 'rgba(0,0,0,0.02)',
-    padding: 15,
-    borderRadius: 12,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 18, 
+    fontWeight: '700',
   },
   bioText: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#444',
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  locationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  locationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  locationInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  locationCity: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  locationAddress: {
+    fontSize: 13,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  skillBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.md,
+  },
+  skillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  experienceItem: {
+    paddingVertical: Spacing.md,
+  },
+  expRole: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  expCompany: {
+    fontSize: 13,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  infoText: {
+    marginLeft: Spacing.md,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: Spacing.sm,
+  },
+  resumeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  resumeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  resumeIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resumeTextContainer: {
+    marginLeft: Spacing.md,
+    flex: 1,
+  },
+  resumeName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  resumeDate: {
+    fontSize: 12,
   },
   statsPreviewCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     alignItems: 'center',
     justifyContent: 'space-around',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
   },
   statsPreviewItem: {
     alignItems: 'center',
@@ -699,247 +822,142 @@ const styles = StyleSheet.create({
   },
   statsPreviewValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    fontWeight: '700',
   },
   statsPreviewLabel: {
     fontSize: 12,
-    color: '#666',
     marginTop: 4,
   },
   statsPreviewDivider: {
     width: 1,
     height: 30,
-    backgroundColor: '#eee',
-  },
-  searchAlertCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-  },
-  searchAlertInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  searchAlertTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  searchAlertMeta: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  resumeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  resumeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  resumeTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  resumeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  resumeDate: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    padding: 12,
-    borderRadius: 10,
-  },
-  infoText: {
-    flex: 1,
+    backgroundColor: 'rgba(150,150,150,0.2)',
   },
   appCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
   },
   appInfo: {
     flex: 1,
   },
   appTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
   },
   appCompany: {
-    fontSize: 14,
-    color: '#007AFF',
+    fontSize: 13,
     marginTop: 2,
   },
   appDate: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 11,
     marginTop: 4,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 10,
+    borderRadius: BorderRadius.sm,
+    marginLeft: Spacing.sm,
   },
   statusText: {
-    color: '#fff',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textTransform: 'uppercase',
-  },
-  logoutButton: {
-    marginTop: 20,
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: '#FFF1F0',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFA39E',
-    marginBottom: 40,
-  },
-  logoutText: {
-    color: '#F5222D',
-    fontWeight: '600',
+    color: '#fff',
   },
   planInfoCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
   },
   planInfoMain: {
     flex: 1,
   },
   planNameText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
   },
   planLimitText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  locationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F7FF',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D0E7FF',
-  },
-  locationInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  locationCity: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  locationAddress: {
     fontSize: 13,
-    color: '#666',
     marginTop: 2,
   },
+  searchAlertCard: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: BorderRadius.lg,
+  },
+  searchAlertInfo: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  searchAlertTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  searchAlertMeta: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: Spacing.md,
+  },
+  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    height: '80%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
   },
   modalForm: {
-    flex: 1,
+    marginBottom: Spacing.lg,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    marginTop: 16,
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: 15,
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 40,
+    marginTop: Spacing.xl,
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

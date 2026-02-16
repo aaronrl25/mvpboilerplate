@@ -1,29 +1,44 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { 
+  ActivityIndicator, 
+  Alert, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  View, 
+  KeyboardAvoidingView, 
+  Platform,
+  ScrollView
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { clearError, register } from '@/store/authSlice';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'employer' | 'seeker'>('seeker');
+  const [showPassword, setShowPassword] = useState(false);
+  
   const dispatch = useAppDispatch();
   const { loading, error, user } = useAppSelector((state) => state.auth);
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
 
   useEffect(() => {
-    // If user is already logged in, redirect to tabs
     if (user) {
       router.replace('/(tabs)');
     }
   }, [user]);
 
   useEffect(() => {
-    // Show error if any
     if (error) {
       Alert.alert('Registration Error', error);
       dispatch(clearError());
@@ -54,70 +69,138 @@ export default function SignupScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        CareerConnect
-      </ThemedText>
-      <ThemedText type="subtitle" style={styles.subtitle}>
-        Create a new account
-      </ThemedText>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <IconSymbol name="chevron.left" size={24} color={theme.text} />
+            </TouchableOpacity>
+            <ThemedText type="title" style={styles.title}>Create Account</ThemedText>
+            <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
+              Join thousands of professionals and companies
+            </ThemedText>
+          </View>
 
-      <ThemedView style={styles.roleContainer}>
-        <TouchableOpacity 
-          style={[styles.roleButton, role === 'seeker' && styles.roleButtonActive]} 
-          onPress={() => setRole('seeker')}
-        >
-          <ThemedText style={[styles.roleButtonText, role === 'seeker' && styles.roleButtonTextActive]}>
-            Job Seeker
-          </ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.roleButton, role === 'employer' && styles.roleButtonActive]} 
-          onPress={() => setRole('employer')}
-        >
-          <ThemedText style={[styles.roleButtonText, role === 'employer' && styles.roleButtonTextActive]}>
-            Employer
-          </ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
+          <View style={styles.roleSelection}>
+            <ThemedText style={[styles.label, { color: theme.textSecondary, marginBottom: 12 }]}>I am a...</ThemedText>
+            <View style={styles.roleContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.roleButton, 
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  role === 'seeker' && { borderColor: theme.primary, backgroundColor: theme.primary + '05' }
+                ]} 
+                onPress={() => setRole('seeker')}
+              >
+                <View style={[styles.roleIcon, { backgroundColor: role === 'seeker' ? theme.primary : theme.textTertiary + '20' }]}>
+                  <IconSymbol name="person.fill" size={20} color={role === 'seeker' ? '#fff' : theme.textSecondary} />
+                </View>
+                <ThemedText style={[styles.roleButtonText, { color: theme.text }, role === 'seeker' && { color: theme.primary, fontWeight: '700' }]}>
+                  Job Seeker
+                </ThemedText>
+                {role === 'seeker' && <IconSymbol name="checkmark.circle.fill" size={18} color={theme.primary} />}
+              </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+              <TouchableOpacity 
+                style={[
+                  styles.roleButton, 
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  role === 'employer' && { borderColor: theme.primary, backgroundColor: theme.primary + '05' }
+                ]} 
+                onPress={() => setRole('employer')}
+              >
+                <View style={[styles.roleIcon, { backgroundColor: role === 'employer' ? theme.primary : theme.textTertiary + '20' }]}>
+                  <IconSymbol name="building.2.fill" size={20} color={role === 'employer' ? '#fff' : theme.textSecondary} />
+                </View>
+                <ThemedText style={[styles.roleButtonText, { color: theme.text }, role === 'employer' && { color: theme.primary, fontWeight: '700' }]}>
+                  Employer
+                </ThemedText>
+                {role === 'employer' && <IconSymbol name="checkmark.circle.fill" size={18} color={theme.primary} />}
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Email Address</ThemedText>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <IconSymbol name="envelope.fill" size={20} color={theme.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="name@company.com"
+                  placeholderTextColor={theme.textTertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
+            <View style={styles.inputGroup}>
+              <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Password</ThemedText>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <IconSymbol name="lock.fill" size={20} color={theme.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="At least 6 characters"
+                  placeholderTextColor={theme.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <IconSymbol 
+                    name={showPassword ? "eye.slash.fill" : "eye.fill"} 
+                    size={20} 
+                    color={theme.textTertiary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <ThemedText style={styles.buttonText}>Sign Up</ThemedText>
-        )}
-      </TouchableOpacity>
+            <View style={styles.inputGroup}>
+              <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Confirm Password</ThemedText>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <IconSymbol name="lock.fill" size={20} color={theme.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="Repeat your password"
+                  placeholderTextColor={theme.textTertiary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showPassword}
+                />
+              </View>
+            </View>
 
-      <TouchableOpacity style={styles.linkContainer} onPress={navigateToLogin}>
-        <ThemedText>Already have an account? </ThemedText>
-        <ThemedText type="link">Login</ThemedText>
-      </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, { backgroundColor: theme.primary, ...Shadows.md }]} 
+              onPress={handleSignup} 
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <ThemedText style={styles.buttonText}>Create Account</ThemedText>
+              )}
+            </TouchableOpacity>
+
+            <ThemedText style={[styles.termsText, { color: theme.textTertiary }]}>
+              By signing up, you agree to our <ThemedText style={{ color: theme.primary }}>Terms of Service</ThemedText> and <ThemedText style={{ color: theme.primary }}>Privacy Policy</ThemedText>.
+            </ThemedText>
+          </View>
+
+          <TouchableOpacity style={styles.footer} onPress={navigateToLogin}>
+            <ThemedText style={{ color: theme.textSecondary }}>Already have an account? </ThemedText>
+            <ThemedText style={[styles.link, { color: theme.primary }]}>Sign In</ThemedText>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -125,70 +208,112 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
   },
-  title: {
-    fontSize: 32,
-    marginBottom: 10,
-    textAlign: 'center',
+  keyboardView: {
+    flex: 1,
   },
-  subtitle: {
-    marginBottom: 30,
-    textAlign: 'center',
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: Spacing.xl,
   },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    backgroundColor: '#fff',
+  header: {
+    marginBottom: Spacing.xl,
   },
-  button: {
-    backgroundColor: '#2196F3',
-    height: 50,
-    borderRadius: 8,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginLeft: -10,
+    marginBottom: Spacing.md,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  roleSelection: {
+    marginBottom: Spacing.xl,
+  },
+  roleContainer: {
+    gap: Spacing.md,
+  },
+  roleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  roleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  roleButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  form: {
+    gap: Spacing.lg,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+  },
+  button: {
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.md,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  linkContainer: {
+  termsText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: Spacing.xs,
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xl,
   },
-  roleContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    gap: 10,
-  },
-  roleButton: {
-    flex: 1,
-    height: 45,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-  },
-  roleButtonActive: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
-  },
-  roleButtonText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  roleButtonTextActive: {
-    color: '#fff',
-    fontWeight: 'bold',
+  link: {
+    fontWeight: '700',
   },
 });

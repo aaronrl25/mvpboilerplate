@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   View, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
@@ -16,8 +17,12 @@ import { subscriptionService } from '@/services/subscriptionService';
 import { locationService } from '@/services/locationService';
 import { useAppSelector } from '@/hooks/useRedux';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function CreateJobScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const { user } = useAppSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   
@@ -113,123 +118,193 @@ export default function CreateJobScreen() {
   const jobTypes: JobType[] = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
   return (
-    <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: 'Post a New Job', headerTransparent: false }} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedText type="subtitle" style={styles.label}>Job Title *</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={formData.title}
-          onChangeText={(text) => setFormData({ ...formData, title: text })}
-          placeholder="e.g. Senior React Developer"
-        />
-
-        <ThemedText type="subtitle" style={styles.label}>Company Name *</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={formData.company}
-          onChangeText={(text) => setFormData({ ...formData, company: text })}
-          placeholder="e.g. Acme Inc"
-        />
-
-        <View style={styles.sectionHeader}>
-          <ThemedText type="subtitle" style={styles.label}>Location</ThemedText>
-          <TouchableOpacity onPress={fetchCurrentLocation} disabled={gettingLocation}>
-            {gettingLocation ? (
-              <ActivityIndicator size="small" color="#007AFF" />
-            ) : (
-              <ThemedText style={styles.useCurrentLocationText}>Use Current Location</ThemedText>
-            )}
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={styles.input}
-          value={formData.location}
-          onChangeText={(text) => setFormData({ ...formData, location: text })}
-          placeholder="e.g. New York, NY"
-        />
-
-        <View style={styles.row}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <Stack.Screen options={{ 
+        title: '',
+        headerTransparent: true,
+        headerLeft: () => (
           <TouchableOpacity 
-            style={styles.checkboxContainer} 
-            onPress={() => setFormData({ ...formData, remote: !formData.remote })}
+            onPress={() => router.back()} 
+            style={[styles.headerCircleButton, { backgroundColor: theme.surface, ...Shadows.sm, marginLeft: Spacing.md }]}
           >
-            <IconSymbol 
-              name={formData.remote ? "checkmark.square.fill" : "square"} 
-              size={24} 
-              color={formData.remote ? "#007AFF" : "#666"} 
-            />
-            <ThemedText style={styles.checkboxLabel}>Remote Position</ThemedText>
+            <IconSymbol name="chevron.left" size={24} color={theme.text} />
           </TouchableOpacity>
+        ),
+      }} />
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.headerSpacer} />
+        
+        <View style={styles.pageHeader}>
+          <ThemedText type="title" style={{ color: theme.text }}>Post a Job</ThemedText>
+          <ThemedText style={{ color: theme.textSecondary }}>Find your next great hire</ThemedText>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.halfInput}>
-            <ThemedText type="subtitle" style={styles.label}>Min Salary ($)</ThemedText>
+        <View style={styles.formSection}>
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Job Title *</ThemedText>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="briefcase.fill" size={18} color={theme.textTertiary} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
-              value={formData.salaryMin}
-              onChangeText={(text) => setFormData({ ...formData, salaryMin: text.replace(/[^0-9]/g, '') })}
-              placeholder="e.g. 80000"
-              keyboardType="numeric"
+              style={[styles.input, { color: theme.text }]}
+              value={formData.title}
+              onChangeText={(text) => setFormData({ ...formData, title: text })}
+              placeholder="e.g. Senior React Developer"
+              placeholderTextColor={theme.textTertiary}
             />
           </View>
-          <View style={styles.halfInput}>
-            <ThemedText type="subtitle" style={styles.label}>Max Salary ($)</ThemedText>
+
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Company Name *</ThemedText>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="building.2.fill" size={18} color={theme.textTertiary} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
-              value={formData.salaryMax}
-              onChangeText={(text) => setFormData({ ...formData, salaryMax: text.replace(/[^0-9]/g, '') })}
-              placeholder="e.g. 120000"
-              keyboardType="numeric"
+              style={[styles.input, { color: theme.text }]}
+              value={formData.company}
+              onChangeText={(text) => setFormData({ ...formData, company: text })}
+              placeholder="e.g. Acme Inc"
+              placeholderTextColor={theme.textTertiary}
             />
           </View>
-        </View>
 
-        <ThemedText type="subtitle" style={styles.label}>Apply URL (External)</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={formData.applyUrl}
-          onChangeText={(text) => setFormData({ ...formData, applyUrl: text })}
-          placeholder="https://company.com/careers/job"
-          autoCapitalize="none"
-        />
-
-        <ThemedText type="subtitle" style={styles.label}>Tags (comma separated)</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={formData.tags}
-          onChangeText={(text) => setFormData({ ...formData, tags: text })}
-          placeholder="React, TypeScript, Remote"
-        />
-
-        <ThemedText type="subtitle" style={styles.label}>Job Type</ThemedText>
-        <View style={styles.typeContainer}>
-          {jobTypes.map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.typeButton, formData.type === type && styles.typeButtonActive]}
-              onPress={() => setFormData({ ...formData, type })}
-            >
-              <ThemedText style={[styles.typeButtonText, formData.type === type && styles.typeButtonTextActive]}>
-                {type}
-              </ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Location</ThemedText>
+            <TouchableOpacity onPress={fetchCurrentLocation} disabled={gettingLocation} style={styles.locationAction}>
+              {gettingLocation ? (
+                <ActivityIndicator size="small" color={theme.primary} />
+              ) : (
+                <>
+                  <IconSymbol name="location.fill" size={14} color={theme.primary} />
+                  <ThemedText style={[styles.useCurrentLocationText, { color: theme.primary }]}>Use GPS</ThemedText>
+                </>
+              )}
             </TouchableOpacity>
-          ))}
-        </View>
+          </View>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="mappin.and.ellipse" size={18} color={theme.textTertiary} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              value={formData.location}
+              onChangeText={(text) => setFormData({ ...formData, location: text })}
+              placeholder="e.g. New York, NY"
+              placeholderTextColor={theme.textTertiary}
+            />
+          </View>
 
-        <ThemedText type="subtitle" style={styles.label}>Job Description *</ThemedText>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={formData.description}
-          onChangeText={(text) => setFormData({ ...formData, description: text })}
-          placeholder="Describe the role and responsibilities..."
-          multiline
-          numberOfLines={6}
-        />
+          <View style={styles.row}>
+            <TouchableOpacity 
+              style={[styles.checkboxContainer, { backgroundColor: formData.remote ? theme.primary + '10' : theme.surface, borderColor: formData.remote ? theme.primary : theme.border }]} 
+              onPress={() => setFormData({ ...formData, remote: !formData.remote })}
+            >
+              <IconSymbol 
+                name={formData.remote ? "checkmark.circle.fill" : "circle"} 
+                size={22} 
+                color={formData.remote ? theme.primary : theme.textTertiary} 
+              />
+              <ThemedText style={[styles.checkboxLabel, { color: theme.text, fontWeight: formData.remote ? '700' : '500' }]}>Remote Position</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Min Salary ($)</ThemedText>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <IconSymbol name="dollarsign.circle.fill" size={18} color={theme.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  value={formData.salaryMin}
+                  onChangeText={(text) => setFormData({ ...formData, salaryMin: text.replace(/[^0-9]/g, '') })}
+                  placeholder="80k"
+                  placeholderTextColor={theme.textTertiary}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.halfInput}>
+              <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Max Salary ($)</ThemedText>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <IconSymbol name="dollarsign.circle.fill" size={18} color={theme.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  value={formData.salaryMax}
+                  onChangeText={(text) => setFormData({ ...formData, salaryMax: text.replace(/[^0-9]/g, '') })}
+                  placeholder="120k"
+                  placeholderTextColor={theme.textTertiary}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </View>
+
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Apply URL (External)</ThemedText>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="link" size={18} color={theme.textTertiary} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              value={formData.applyUrl}
+              onChangeText={(text) => setFormData({ ...formData, applyUrl: text })}
+              placeholder="https://company.com/careers"
+              placeholderTextColor={theme.textTertiary}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Tags (comma separated)</ThemedText>
+          <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="tag.fill" size={18} color={theme.textTertiary} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              value={formData.tags}
+              onChangeText={(text) => setFormData({ ...formData, tags: text })}
+              placeholder="React, TypeScript, Remote"
+              placeholderTextColor={theme.textTertiary}
+            />
+          </View>
+
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Job Type</ThemedText>
+          <View style={styles.typeContainer}>
+            {jobTypes.map((type) => {
+              const isActive = formData.type === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.typeButton, 
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                    isActive && { backgroundColor: theme.primary + '10', borderColor: theme.primary }
+                  ]}
+                  onPress={() => setFormData({ ...formData, type })}
+                >
+                  <ThemedText style={[
+                    styles.typeButtonText, 
+                    { color: theme.textSecondary },
+                    isActive && { color: theme.primary, fontWeight: '700' }
+                  ]}>
+                    {type}
+                  </ThemedText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>Job Description *</ThemedText>
+          <View style={[styles.inputWrapper, styles.textAreaWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <IconSymbol name="text.alignleft" size={18} color={theme.textTertiary} style={[styles.inputIcon, { marginTop: 12 }]} />
+            <TextInput
+              style={[styles.input, styles.textArea, { color: theme.text }]}
+              value={formData.description}
+              onChangeText={(text) => setFormData({ ...formData, description: text })}
+              placeholder="Describe the role and responsibilities..."
+              placeholderTextColor={theme.textTertiary}
+              multiline
+              numberOfLines={6}
+            />
+          </View>
+        </View>
 
         <TouchableOpacity 
-          style={styles.submitButton} 
+          style={[styles.submitButton, { backgroundColor: theme.primary, ...Shadows.md }]} 
           onPress={handleSubmit}
           disabled={loading}
         >
@@ -248,14 +323,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerSpacer: {
+    height: Platform.OS === 'ios' ? 100 : 80,
+  },
+  headerCircleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xl * 2,
+  },
+  pageHeader: {
+    marginBottom: Spacing.xl,
+  },
+  formSection: {
+    marginBottom: Spacing.xl,
   },
   label: {
     marginBottom: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    opacity: 0.8,
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -263,23 +356,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  locationAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   useCurrentLocationText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+  },
+  inputIcon: {
+    marginRight: Spacing.sm,
   },
   input: {
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+    flex: 1,
+    paddingVertical: Spacing.md,
     fontSize: 16,
-    marginBottom: 16,
+  },
+  textAreaWrapper: {
+    alignItems: 'flex-start',
+    paddingTop: Spacing.sm,
+  },
+  textArea: {
+    height: 150,
+    textAlignVertical: 'top',
   },
   row: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
     alignItems: 'center',
   },
   halfInput: {
@@ -288,50 +401,42 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    flex: 1,
   },
   checkboxLabel: {
-    fontSize: 16,
-  },
-  textArea: {
-    height: 120,
-    textAlignVertical: 'top',
+    fontSize: 15,
   },
   typeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   typeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.pill,
     borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  typeButtonActive: {
-    backgroundColor: '#007AFF',
   },
   typeButtonText: {
-    color: '#007AFF',
     fontSize: 14,
-  },
-  typeButtonTextActive: {
-    color: '#fff',
+    fontWeight: '600',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 8,
+    height: 56,
+    borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 30,
+    marginTop: Spacing.md,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });

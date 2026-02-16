@@ -2,83 +2,82 @@ import React, { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from './ui/icon-symbol';
 
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
 }
 
-export function SearchBar({ onSearch, placeholder = 'Search movies...' }: SearchBarProps) {
+export function SearchBar({ onSearch, placeholder = 'Search jobs...' }: SearchBarProps) {
   const [query, setQuery] = useState('');
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
 
-  const handleSearch = () => {
-    if (query.trim()) {
-      onSearch(query.trim());
-    }
+  const handleChangeText = (text: string) => {
+    setQuery(text);
+    onSearch(text); // Search as you type for better UX
   };
 
   const handleClear = () => {
     setQuery('');
+    onSearch('');
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <IconSymbol name="magnifyingglass" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[
+        styles.searchContainer, 
+        { 
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+          ...Shadows.sm 
+        }
+      ]}>
+        <IconSymbol name="magnifyingglass" size={18} color={theme.textSecondary} style={styles.searchIcon} />
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.text }]}
           placeholder={placeholder}
+          placeholderTextColor={theme.textSecondary}
           value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={handleSearch}
+          onChangeText={handleChangeText}
           returnKeyType="search"
-          clearButtonMode="while-editing"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-            <IconSymbol name="xmark.circle.fill" size={20} color="#999" />
+            <IconSymbol name="xmark.circle.fill" size={18} color={theme.icon} />
           </TouchableOpacity>
         )}
       </View>
-      <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-        <IconSymbol name="arrow.right" size={20} color="#fff" />
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    flex: 1,
   },
   searchContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    height: 48,
+    gap: 12,
   },
   searchIcon: {
-    marginRight: 8,
+    // Icon color handled by theme
   },
   input: {
     flex: 1,
-    height: 40,
-    fontSize: 16,
+    height: '100%',
+    fontSize: 15,
+    fontWeight: '500',
   },
   clearButton: {
     padding: 4,
-  },
-  searchButton: {
-    marginLeft: 8,
-    backgroundColor: '#2196F3',
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

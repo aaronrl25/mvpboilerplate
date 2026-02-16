@@ -5,15 +5,19 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAppSelector } from '@/hooks/useRedux';
 import { jobService, Job } from '@/services/jobService';
 import { applicationService, JobApplication } from '@/services/applicationService';
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { EmptyState } from '@/components/EmptyState';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +26,8 @@ interface JobStat extends Job {
 }
 
 export default function EmployerStatsScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const { user } = useAppSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
   const [jobStats, setJobStats] = useState<JobStat[]>([]);
@@ -67,70 +73,109 @@ export default function EmployerStatsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      <ThemedView style={[styles.centerContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </ThemedView>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color="#007AFF" />
-        </TouchableOpacity>
-        <ThemedText type="title">Employer Stats</ThemedText>
-      </View>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <Stack.Screen options={{ 
+        title: '',
+        headerTransparent: true,
+        headerLeft: () => (
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.headerCircleButton, { backgroundColor: theme.surface, ...Shadows.sm, marginLeft: Spacing.md }]}
+          >
+            <IconSymbol name="chevron.left" size={24} color={theme.text} />
+          </TouchableOpacity>
+        ),
+      }} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.headerSpacer} />
+        
+        <View style={styles.pageHeader}>
+          <ThemedText type="title" style={{ color: theme.text }}>Employer Insights</ThemedText>
+          <ThemedText style={{ color: theme.textSecondary }}>Monitor your hiring performance</ThemedText>
+        </View>
+
         {/* Summary Cards */}
         <View style={styles.summaryGrid}>
-          <View style={[styles.summaryCard, { backgroundColor: '#E3F2FD' }]}>
-            <IconSymbol name="eye.fill" size={24} color="#1976D2" />
-            <ThemedText style={styles.summaryValue}>{totalViews}</ThemedText>
-            <ThemedText style={styles.summaryLabel}>Total Views</ThemedText>
+          <View style={[styles.summaryCard, { backgroundColor: theme.surface, ...Shadows.md }]}>
+            <View style={[styles.summaryIcon, { backgroundColor: theme.primary + '15' }]}>
+              <IconSymbol name="eye.fill" size={20} color={theme.primary} />
+            </View>
+            <ThemedText style={[styles.summaryValue, { color: theme.text }]}>{totalViews}</ThemedText>
+            <ThemedText style={[styles.summaryLabel, { color: theme.textTertiary }]}>Total Views</ThemedText>
           </View>
           
-          <View style={[styles.summaryCard, { backgroundColor: '#E8F5E9' }]}>
-            <IconSymbol name="person.2.fill" size={24} color="#388E3C" />
-            <ThemedText style={styles.summaryValue}>{totalApplications}</ThemedText>
-            <ThemedText style={styles.summaryLabel}>Applications</ThemedText>
+          <View style={[styles.summaryCard, { backgroundColor: theme.surface, ...Shadows.md }]}>
+            <View style={[styles.summaryIcon, { backgroundColor: '#34C75915' }]}>
+              <IconSymbol name="person.2.fill" size={20} color="#34C759" />
+            </View>
+            <ThemedText style={[styles.summaryValue, { color: theme.text }]}>{totalApplications}</ThemedText>
+            <ThemedText style={[styles.summaryLabel, { color: theme.textTertiary }]}>Applications</ThemedText>
           </View>
           
-          <View style={[styles.summaryCard, { backgroundColor: '#FFF3E0' }]}>
-            <IconSymbol name="chart.bar.fill" size={24} color="#F57C00" />
-            <ThemedText style={styles.summaryValue}>{conversionRate}%</ThemedText>
-            <ThemedText style={styles.summaryLabel}>Conversion</ThemedText>
+          <View style={[styles.summaryCard, { backgroundColor: theme.surface, ...Shadows.md }]}>
+            <View style={[styles.summaryIcon, { backgroundColor: '#FF950015' }]}>
+              <IconSymbol name="chart.bar.fill" size={20} color="#FF9500" />
+            </View>
+            <ThemedText style={[styles.summaryValue, { color: theme.text }]}>{conversionRate}%</ThemedText>
+            <ThemedText style={[styles.summaryLabel, { color: theme.textTertiary }]}>Conversion</ThemedText>
+          </View>
+        </View>
+
+        {/* Reach Card */}
+        <View style={[styles.reachCard, { backgroundColor: theme.primary, ...Shadows.md }]}>
+          <View style={styles.reachInfo}>
+            <ThemedText style={styles.reachTitle}>Talent Reach</ThemedText>
+            <ThemedText style={styles.reachSubtitle}>Your jobs are performing well!</ThemedText>
+          </View>
+          <View style={styles.reachStats}>
+            <ThemedText style={styles.reachValue}>+{Math.round(totalViews / 7)}</ThemedText>
+            <ThemedText style={styles.reachLabel}>this week</ThemedText>
           </View>
         </View>
 
         {/* Job Performance List */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Job Performance</ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>Job Performance</ThemedText>
+          </View>
           {jobStats.length === 0 ? (
-            <View style={styles.emptyState}>
-              <ThemedText>No jobs posted yet.</ThemedText>
-            </View>
+            <EmptyState
+              icon="doc.text.magnify"
+              title="No jobs posted"
+              message="Post your first job to start seeing analytics."
+            />
           ) : (
             jobStats.map((job) => (
               <TouchableOpacity 
                 key={job.id} 
-                style={styles.jobStatCard}
-                onPress={() => router.push(`/applications/review?jobId=${job.id}`)}
+                style={[styles.jobStatCard, { backgroundColor: theme.surface, borderColor: theme.border, ...Shadows.sm }]}
+                onPress={() => router.push(`/employer/applications/${job.id}`)}
               >
                 <View style={styles.jobInfo}>
-                  <ThemedText type="defaultSemiBold" numberOfLines={1}>{job.title}</ThemedText>
-                  <ThemedText style={styles.jobMeta}>{job.type} • {job.location}</ThemedText>
+                  <ThemedText type="defaultSemiBold" numberOfLines={1} style={{ color: theme.text }}>{job.title}</ThemedText>
+                  <ThemedText style={[styles.jobMeta, { color: theme.textSecondary }]}>{job.type} • {job.location}</ThemedText>
                 </View>
                 <View style={styles.jobMetrics}>
                   <View style={styles.metricItem}>
-                    <ThemedText style={styles.metricValue}>{job.viewsCount || 0}</ThemedText>
-                    <ThemedText style={styles.metricLabel}>Views</ThemedText>
+                    <ThemedText style={[styles.metricValue, { color: theme.text }]}>{job.viewsCount || 0}</ThemedText>
+                    <ThemedText style={[styles.metricLabel, { color: theme.textTertiary }]}>Views</ThemedText>
                   </View>
                   <View style={styles.metricItem}>
-                    <ThemedText style={styles.metricValue}>{job.applicationCount}</ThemedText>
-                    <ThemedText style={styles.metricLabel}>Apps</ThemedText>
+                    <ThemedText style={[styles.metricValue, { color: theme.text }]}>{job.applicationCount}</ThemedText>
+                    <ThemedText style={[styles.metricLabel, { color: theme.textTertiary }]}>Apps</ThemedText>
                   </View>
+                  <IconSymbol name="chevron.right" size={16} color={theme.textTertiary} />
                 </View>
               </TouchableOpacity>
             ))
@@ -139,22 +184,30 @@ export default function EmployerStatsScreen() {
 
         {/* Simple Visualization */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Engagement Breakdown</ThemedText>
-          <View style={styles.chartPlaceholder}>
-            {jobStats.map((job, index) => {
-              const maxVal = Math.max(...jobStats.map(j => j.viewsCount || 0), 1);
-              const barWidth = ((job.viewsCount || 0) / maxVal) * (width - 80);
-              
-              return (
-                <View key={job.id} style={styles.barContainer}>
-                  <ThemedText style={styles.barLabel} numberOfLines={1}>{job.title}</ThemedText>
-                  <View style={styles.barWrapper}>
-                    <View style={[styles.bar, { width: Math.max(barWidth, 2) }]} />
-                    <ThemedText style={styles.barValue}>{job.viewsCount || 0}</ThemedText>
+          <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>Engagement Breakdown</ThemedText>
+          <View style={[styles.chartContainer, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+            {jobStats.length === 0 ? (
+              <ThemedText style={{ color: theme.textTertiary, textAlign: 'center', padding: Spacing.xl }}>
+                No data to visualize
+              </ThemedText>
+            ) : (
+              jobStats.map((job, index) => {
+                const maxVal = Math.max(...jobStats.map(j => j.viewsCount || 0), 1);
+                const barWidth = ((job.viewsCount || 0) / maxVal) * (width - Spacing.xl * 4 - 80);
+                
+                return (
+                  <View key={job.id} style={styles.barContainer}>
+                    <ThemedText style={[styles.barLabel, { color: theme.textSecondary }]} numberOfLines={1}>{job.title}</ThemedText>
+                    <View style={styles.barWrapper}>
+                      <View style={[styles.bar, { width: Math.max(barWidth, 4), backgroundColor: theme.primary }]} />
+                      <ThemedText style={[styles.barValue, { color: (barWidth > (width - 200)) ? '#fff' : theme.textSecondary }]}>
+                        {job.viewsCount || 0}
+                      </ThemedText>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })
+            )}
           </View>
         </View>
       </ScrollView>
@@ -165,123 +218,170 @@ export default function EmployerStatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  backButton: {
-    marginRight: 15,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xl * 2,
+  },
+  headerSpacer: {
+    height: Platform.OS === 'ios' ? 100 : 80,
+  },
+  headerCircleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageHeader: {
+    marginBottom: Spacing.xl,
+  },
+  reachCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  reachInfo: {
+    flex: 1,
+  },
+  reachTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  reachSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+  },
+  reachStats: {
+    alignItems: 'flex-end',
+  },
+  reachValue: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  reachLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
   summaryGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   summaryCard: {
-    width: (width - 60) / 3,
-    padding: 15,
-    borderRadius: 16,
+    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  summaryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
   summaryValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 8,
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 2,
   },
   summaryLabel: {
     fontSize: 10,
-    color: '#666',
-    marginTop: 2,
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   section: {
-    marginBottom: 30,
+    marginBottom: Spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    marginBottom: 15,
+    fontSize: 20,
+    fontWeight: '700',
   },
   jobStatCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#f0f0f0',
   },
   jobInfo: {
     flex: 1,
-    marginRight: 10,
+    marginRight: Spacing.md,
   },
   jobMeta: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
     marginTop: 4,
   },
   jobMetrics: {
     flexDirection: 'row',
-    gap: 15,
+    alignItems: 'center',
+    gap: Spacing.md,
   },
   metricItem: {
     alignItems: 'center',
   },
   metricValue: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   metricLabel: {
     fontSize: 10,
-    color: '#999',
+    fontWeight: '600',
   },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-  },
-  chartPlaceholder: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
+  chartContainer: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
   },
   barContainer: {
-    marginBottom: 15,
+    marginBottom: Spacing.lg,
   },
   barLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   barWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(150,150,150,0.1)',
+    borderRadius: 6,
+    flex: 1,
   },
   bar: {
-    height: 8,
-    backgroundColor: '#007AFF',
-    borderRadius: 4,
+    height: 12,
+    borderRadius: 6,
   },
   barValue: {
-    fontSize: 10,
-    color: '#999',
-    marginLeft: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: Spacing.sm,
+    position: 'absolute',
+    right: 10,
   },
 });

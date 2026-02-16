@@ -25,7 +25,12 @@ import { aiService, JobFitAdvice } from '@/services/aiService';
 import { Timestamp } from 'firebase/firestore';
 import * as DocumentPicker from 'expo-document-picker';
 
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 export default function JobDetailsScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const { id } = useLocalSearchParams<{ id: string }>();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -226,121 +231,213 @@ export default function JobDetailsScreen() {
     return 'Salary not specified';
   };
 
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Just now';
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
   if (loading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <ThemedView style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </ThemedView>
     );
   }
 
   if (error || !job) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>{error || 'Job not found'}</ThemedText>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ThemedText style={{ color: theme.text }}>{error || 'Job not found'}</ThemedText>
+        <TouchableOpacity style={[styles.backButton, { marginTop: Spacing.md }]} onPress={() => router.back()}>
+          <ThemedText style={{ color: theme.primary }}>Go Back</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView style={{ flex: 1 }}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
       <Stack.Screen options={{ 
-        title: job.company, 
-        headerTransparent: false,
+        title: '',
+        headerTransparent: true,
+        headerLeft: () => (
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.headerCircleButton, { backgroundColor: theme.surface, ...Shadows.sm, marginLeft: Spacing.md }]}
+          >
+            <IconSymbol name="chevron.left" size={24} color={theme.text} />
+          </TouchableOpacity>
+        ),
         headerRight: () => (
-          <TouchableOpacity onPress={toggleSave} style={{ marginRight: 10 }}>
+          <TouchableOpacity 
+            onPress={toggleSave} 
+            style={[styles.headerCircleButton, { backgroundColor: theme.surface, ...Shadows.sm, marginRight: Spacing.md }]}
+          >
             <IconSymbol 
               name={isSaved ? "bookmark.fill" : "bookmark"} 
-              size={24} 
-              color={isSaved ? "#007AFF" : "#666"} 
+              size={20} 
+              color={isSaved ? theme.primary : theme.text} 
             />
           </TouchableOpacity>
         )
       }} />
-      <ScrollView style={styles.scrollView}>
-        <ThemedView style={styles.header}>
-          <Image 
-            source={{ uri: job.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${job.company}` }} 
-            style={styles.logo} 
-          />
-          <ThemedText type="title" style={styles.title}>{job.title}</ThemedText>
-          <ThemedText style={styles.company}>{job.company}</ThemedText>
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.headerSpacer} />
+        
+        <View style={styles.jobHeader}>
+          <View style={[styles.companyLogoContainer, { backgroundColor: theme.surface, ...Shadows.md, borderColor: theme.border }]}>
+            <Image 
+              source={{ uri: job.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${job.company}` }} 
+              style={styles.logo} 
+            />
+          </View>
           
-          <View style={styles.badgeContainer}>
-            <View style={styles.badge}>
-              <IconSymbol name="mappin.and.ellipse" size={14} color="#666" />
-              <ThemedText style={styles.badgeText}>{job.location}{job.remote ? ' (Remote)' : ''}</ThemedText>
+          <ThemedText type="title" style={[styles.jobTitle, { color: theme.text }]}>{job.title}</ThemedText>
+          <ThemedText style={[styles.companyName, { color: theme.primary }]}>{job.company}</ThemedText>
+          
+          <View style={styles.metaRow}>
+            <View style={[styles.metaBadge, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <IconSymbol name="mappin.and.ellipse" size={14} color={theme.textSecondary} />
+              <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>{job.location}</ThemedText>
             </View>
-            <View style={styles.badge}>
-              <IconSymbol name="briefcase.fill" size={14} color="#666" />
-              <ThemedText style={styles.badgeText}>{job.type}</ThemedText>
+            <View style={[styles.metaBadge, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <IconSymbol name="briefcase.fill" size={14} color={theme.textSecondary} />
+              <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>{job.type}</ThemedText>
             </View>
-            <View style={styles.badge}>
-              <IconSymbol name="dollarsign.circle" size={14} color="#666" />
-              <ThemedText style={styles.badgeText}>{formatSalary()}</ThemedText>
+            {job.remote && (
+              <View style={[styles.metaBadge, { backgroundColor: theme.primary + '15', borderColor: 'transparent' }]}>
+                <IconSymbol name="globe" size={12} color={theme.primary} style={{ marginRight: 4 }} />
+                <ThemedText style={[styles.metaText, { color: theme.primary, fontWeight: '700' }]}>Remote</ThemedText>
+              </View>
+            )}
+          </View>
+
+          <View style={[styles.salaryCard, { backgroundColor: theme.surface, ...Shadows.md, borderColor: theme.border }]}>
+            <View style={styles.salaryInfo}>
+              <View style={[styles.salaryIconBox, { backgroundColor: theme.primary + '10' }]}>
+                <IconSymbol name="dollarsign.circle.fill" size={18} color={theme.primary} />
+              </View>
+              <View>
+                <ThemedText style={[styles.salaryLabel, { color: theme.textSecondary }]}>Salary Range</ThemedText>
+                <ThemedText style={[styles.salaryValue, { color: theme.text }]}>{formatSalary()}</ThemedText>
+              </View>
+            </View>
+            <View style={[styles.salaryDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.postedInfo}>
+              <View style={[styles.salaryIconBox, { backgroundColor: theme.textSecondary + '10' }]}>
+                <IconSymbol name="calendar" size={18} color={theme.textSecondary} />
+              </View>
+              <View>
+                <ThemedText style={[styles.salaryLabel, { color: theme.textSecondary }]}>Posted</ThemedText>
+                <ThemedText style={[styles.salaryValue, { color: theme.text }]}>{formatDate(job.postedAt)}</ThemedText>
+              </View>
             </View>
           </View>
-        </ThemedView>
+        </View>
 
-        <ThemedView style={styles.content}>
-          {job.tags && job.tags.length > 0 && (
-            <View style={styles.section}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Skills</ThemedText>
-              <View style={styles.tagsContainer}>
-                {job.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <ThemedText style={styles.tagText}>{tag}</ThemedText>
-                  </View>
-                ))}
-              </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={[styles.sectionIcon, { backgroundColor: theme.primary + '15' }]}>
+              <IconSymbol name="text.alignleft" size={16} color={theme.primary} />
             </View>
-          )}
+            <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>Job Description</ThemedText>
+          </View>
+          <View style={[styles.descriptionContainer, { backgroundColor: theme.surface, borderColor: theme.border, ...Shadows.sm }]}>
+            <ThemedText style={[styles.descriptionText, { color: theme.textSecondary }]}>{job.description}</ThemedText>
+          </View>
+        </View>
 
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Description</ThemedText>
-            <ThemedText style={styles.description}>{job.description}</ThemedText>
-          </ThemedView>
-
-          {relatedJobs.length > 0 && (
-            <ThemedView style={styles.section}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Related Jobs</ThemedText>
-              <View style={styles.relatedJobsContainer}>
-                {relatedJobs.map((item) => (
-                  <TouchableOpacity 
-                    key={item.id} 
-                    style={styles.relatedJobCard}
-                    onPress={() => router.push(`/job/${item.id}`)}
-                  >
-                    <ThemedText type="defaultSemiBold" numberOfLines={1}>{item.title}</ThemedText>
-                    <ThemedText style={styles.relatedJobCompany} numberOfLines={1}>{item.company}</ThemedText>
-                    <ThemedText style={styles.relatedJobLocation} numberOfLines={1}>{item.location}</ThemedText>
-                  </TouchableOpacity>
-                ))}
+        {job.tags && job.tags.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionIcon, { backgroundColor: theme.primary + '15' }]}>
+                <IconSymbol name="tag.fill" size={16} color={theme.primary} />
               </View>
-            </ThemedView>
-          )}
-        </ThemedView>
+              <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>Skills & Tags</ThemedText>
+            </View>
+            <View style={styles.tagsContainer}>
+              {job.tags.map((tag, index) => (
+                <View key={index} style={[styles.tagBadge, { backgroundColor: theme.surface, borderColor: theme.border, ...Shadows.sm }]}>
+                  <ThemedText style={[styles.tagText, { color: theme.textSecondary }]}>{tag}</ThemedText>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {relatedJobs.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionIcon, { backgroundColor: theme.primary + '15' }]}>
+                <IconSymbol name="sparkles" size={16} color={theme.primary} />
+              </View>
+              <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>Similar Roles</ThemedText>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.relatedJobsScroll} contentContainerStyle={{ paddingRight: Spacing.xl }}>
+              {relatedJobs.map((item) => (
+                <TouchableOpacity 
+                  key={item.id} 
+                  style={[styles.relatedJobCard, { backgroundColor: theme.surface, borderColor: theme.border, ...Shadows.sm }]}
+                  onPress={() => router.push(`/job/${item.id}`)}
+                >
+                  <View style={styles.relatedJobHeader}>
+                    <Image 
+                      source={{ uri: item.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${item.company}` }} 
+                      style={styles.relatedLogo} 
+                    />
+                    <View style={{ flex: 1 }}>
+                      <ThemedText type="defaultSemiBold" numberOfLines={1} style={{ color: theme.text }}>{item.title}</ThemedText>
+                      <ThemedText style={[styles.relatedJobCompany, { color: theme.primary }]} numberOfLines={1}>{item.company}</ThemedText>
+                    </View>
+                  </View>
+                  <View style={styles.relatedJobFooter}>
+                    <IconSymbol name="mappin.and.ellipse" size={12} color={theme.textTertiary} />
+                    <ThemedText style={[styles.relatedJobLocation, { color: theme.textSecondary }]} numberOfLines={1}>{item.location}</ThemedText>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
       
-      <ThemedView style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, ...Shadows.lg }]}>
         <TouchableOpacity 
-          style={[styles.aiButton, isAiLoading && styles.disabledButton]} 
+          style={[styles.aiButton, { borderColor: theme.primary, backgroundColor: theme.primary + '10' }]} 
           onPress={getCareerAdvice}
           disabled={isAiLoading}
         >
           {isAiLoading ? (
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color={theme.primary} />
           ) : (
             <>
-              <IconSymbol name="sparkles" size={20} color="#007AFF" />
-              <ThemedText style={styles.aiButtonText}>AI Advice</ThemedText>
+              <View style={[styles.aiIconBadge, { backgroundColor: theme.primary }]}>
+                <IconSymbol name="sparkles" size={14} color="#fff" />
+              </View>
+              <ThemedText style={[styles.aiButtonText, { color: theme.primary }]}>AI Fit Score</ThemedText>
             </>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+        <TouchableOpacity 
+          style={[styles.applyButton, { backgroundColor: theme.primary, ...Shadows.md }]} 
+          onPress={handleApply}
+        >
           <ThemedText style={styles.applyButtonText}>Apply Now</ThemedText>
+          <IconSymbol name="arrow.right" size={18} color="#fff" style={{ marginLeft: 8 }} />
         </TouchableOpacity>
-      </ThemedView>
+      </View>
 
       <Modal
         visible={isAiModalVisible}
@@ -349,56 +446,59 @@ export default function JobDetailsScreen() {
         onRequestClose={() => setIsAiModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalContent}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
               <View style={styles.aiHeaderTitle}>
-                <IconSymbol name="sparkles" size={24} color="#007AFF" />
-                <ThemedText type="subtitle" style={{ marginLeft: 8 }}>Career Coach Advice</ThemedText>
+                <IconSymbol name="sparkles" size={24} color={theme.primary} />
+                <ThemedText type="subtitle" style={{ marginLeft: 8, color: theme.text }}>AI Career Coach</ThemedText>
               </View>
               <TouchableOpacity onPress={() => setIsAiModalVisible(false)}>
-                <IconSymbol name="xmark" size={24} color="#666" />
+                <IconSymbol name="xmark" size={24} color={theme.textTertiary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.scoreContainer}>
-                <ThemedText style={styles.scoreLabel}>Job Fit Score</ThemedText>
-                <ThemedText style={styles.scoreValue}>{aiAdvice?.fitScore}%</ThemedText>
+              <View style={[styles.scoreCard, { backgroundColor: theme.primary + '08' }]}>
+                <ThemedText style={[styles.scoreLabel, { color: theme.textSecondary }]}>Match Score</ThemedText>
+                <ThemedText style={[styles.scoreValue, { color: theme.primary }]}>{aiAdvice?.fitScore}%</ThemedText>
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${aiAdvice?.fitScore || 0}%`, backgroundColor: theme.primary }]} />
+                </View>
               </View>
 
               <View style={styles.aiAdviceSection}>
-                <ThemedText type="defaultSemiBold" style={styles.aiSectionTitle}>Missing Skills</ThemedText>
+                <ThemedText type="defaultSemiBold" style={[styles.aiSectionTitle, { color: theme.text }]}>Missing Skills</ThemedText>
                 {aiAdvice?.missingSkills.map((skill, i) => (
-                  <View key={i} style={styles.adviceItem}>
-                    <IconSymbol name="exclamationmark.circle" size={16} color="#FF9500" />
-                    <ThemedText style={styles.adviceText}>{skill}</ThemedText>
+                  <View key={i} style={[styles.adviceItem, { backgroundColor: theme.background }]}>
+                    <IconSymbol name="exclamationmark.circle.fill" size={16} color="#FF9500" />
+                    <ThemedText style={[styles.adviceText, { color: theme.textSecondary }]}>{skill}</ThemedText>
                   </View>
                 ))}
               </View>
 
               <View style={styles.aiAdviceSection}>
-                <ThemedText type="defaultSemiBold" style={styles.aiSectionTitle}>Resume Improvements</ThemedText>
+                <ThemedText type="defaultSemiBold" style={[styles.aiSectionTitle, { color: theme.text }]}>Resume Tips</ThemedText>
                 {aiAdvice?.resumeImprovements.map((tip, i) => (
-                  <View key={i} style={styles.adviceItem}>
-                    <IconSymbol name="pencil" size={16} color="#007AFF" />
-                    <ThemedText style={styles.adviceText}>{tip}</ThemedText>
+                  <View key={i} style={[styles.adviceItem, { backgroundColor: theme.background }]}>
+                    <IconSymbol name="lightbulb.fill" size={16} color={theme.primary} />
+                    <ThemedText style={[styles.adviceText, { color: theme.textSecondary }]}>{tip}</ThemedText>
                   </View>
                 ))}
               </View>
 
               <View style={styles.aiAdviceSection}>
-                <ThemedText type="defaultSemiBold" style={styles.aiSectionTitle}>Interview Tips</ThemedText>
+                <ThemedText type="defaultSemiBold" style={[styles.aiSectionTitle, { color: theme.text }]}>Interview Strategy</ThemedText>
                 {aiAdvice?.interviewTips.map((tip, i) => (
-                  <View key={i} style={styles.adviceItem}>
-                    <IconSymbol name="checkmark.circle" size={16} color="#34C759" />
-                    <ThemedText style={styles.adviceText}>{tip}</ThemedText>
+                  <View key={i} style={[styles.adviceItem, { backgroundColor: theme.background }]}>
+                    <IconSymbol name="checkmark.circle.fill" size={16} color="#34C759" />
+                    <ThemedText style={[styles.adviceText, { color: theme.textSecondary }]}>{tip}</ThemedText>
                   </View>
                 ))}
               </View>
             </ScrollView>
 
             <TouchableOpacity 
-              style={styles.closeAiButton} 
+              style={[styles.closeAiButton, { backgroundColor: theme.primary, ...Shadows.md }]} 
               onPress={() => setIsAiModalVisible(false)}
             >
               <ThemedText style={styles.closeAiButtonText}>Got it!</ThemedText>
@@ -414,40 +514,50 @@ export default function JobDetailsScreen() {
         onRequestClose={() => setIsApplyModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalContent}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="subtitle">Apply for {job.title}</ThemedText>
+              <ThemedText type="subtitle" style={{ color: theme.text }}>Apply Now</ThemedText>
               <TouchableOpacity onPress={() => setIsApplyModalVisible(false)}>
-                <IconSymbol name="xmark" size={24} color="#000" />
+                <IconSymbol name="xmark" size={24} color={theme.textTertiary} />
               </TouchableOpacity>
             </View>
             
             <View style={styles.resumeSection}>
-              <ThemedText style={styles.modalLabel}>Your Resume</ThemedText>
+              <ThemedText style={[styles.modalLabel, { color: theme.textSecondary }]}>Your Resume</ThemedText>
               {uploadingResume ? (
-                <ActivityIndicator color="#007AFF" />
+                <View style={styles.loadingResume}>
+                  <ActivityIndicator color={theme.primary} />
+                  <ThemedText style={{ color: theme.textSecondary, marginTop: 8 }}>Uploading...</ThemedText>
+                </View>
               ) : userProfile?.resumeUrl ? (
-                <View style={styles.resumeAttachedCard}>
-                  <IconSymbol name="doc.fill" size={20} color="#007AFF" />
-                  <ThemedText style={styles.resumeAttachedName} numberOfLines={1}>
-                    {userProfile.resumeName}
-                  </ThemedText>
+                <View style={[styles.resumeAttachedCard, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <IconSymbol name="doc.fill" size={24} color={theme.primary} />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <ThemedText style={[styles.resumeAttachedName, { color: theme.text }]} numberOfLines={1}>
+                      {userProfile.resumeName}
+                    </ThemedText>
+                    <ThemedText style={{ color: theme.textTertiary, fontSize: 12 }}>Attached Resume</ThemedText>
+                  </View>
                   <TouchableOpacity onPress={handleUploadResume}>
-                    <ThemedText style={styles.changeText}>Change</ThemedText>
+                    <ThemedText style={[styles.changeText, { color: theme.primary }]}>Change</ThemedText>
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity style={styles.uploadBox} onPress={handleUploadResume}>
-                  <IconSymbol name="arrow.up.doc" size={24} color="#666" />
-                  <ThemedText style={styles.uploadText}>Upload Resume (PDF/Doc)</ThemedText>
+                <TouchableOpacity 
+                  style={[styles.uploadBox, { backgroundColor: theme.background, borderColor: theme.border, borderStyle: 'dashed' }]} 
+                  onPress={handleUploadResume}
+                >
+                  <IconSymbol name="arrow.up.doc.fill" size={32} color={theme.textTertiary} />
+                  <ThemedText style={[styles.uploadText, { color: theme.textSecondary }]}>Upload Resume (PDF/Doc)</ThemedText>
                 </TouchableOpacity>
               )}
             </View>
 
-            <ThemedText style={styles.modalLabel}>Add a note to your application (optional)</ThemedText>
+            <ThemedText style={[styles.modalLabel, { color: theme.textSecondary }]}>Cover Note (Optional)</ThemedText>
             <TextInput
-              style={styles.noteInput}
+              style={[styles.noteInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
               placeholder="Tell the employer why you're a good fit..."
+              placeholderTextColor={theme.textTertiary}
               multiline
               numberOfLines={4}
               value={applyNote}
@@ -457,7 +567,8 @@ export default function JobDetailsScreen() {
             <TouchableOpacity 
               style={[
                 styles.submitButton, 
-                (isApplying || !userProfile?.resumeUrl) && styles.disabledButton
+                { backgroundColor: theme.primary, ...Shadows.md },
+                (isApplying || !userProfile?.resumeUrl) && { opacity: 0.5 }
               ]}
               onPress={submitApplication}
               disabled={isApplying || !userProfile?.resumeUrl}
@@ -476,162 +587,237 @@ export default function JobDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  container: {
-    flex: 1,
-    padding: 20,
+  scrollContent: {
+    paddingBottom: 120,
+  },
+  headerSpacer: {
+    height: Platform.OS === 'ios' ? 100 : 80,
+  },
+  headerCircleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
+  jobHeader: {
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
-    padding: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginBottom: Spacing.xl,
   },
-  logo: {
+  companyLogoContainer: {
     width: 80,
     height: 80,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: BorderRadius.xl,
+    justifyContent: 'center',
+    alignItems: 'center',    marginBottom: Spacing.md,
+    borderWidth: 1,
   },
-  title: {
-    fontSize: 24,
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: BorderRadius.lg,
+  },
+  jobTitle: {
+    fontSize: 26,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  company: {
+  companyName: {
     fontSize: 18,
-    color: '#007AFF',
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: '700',
+    marginBottom: Spacing.lg,
   },
-  badgeContainer: {
+  metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 8,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
-  badge: {
+  metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: BorderRadius.pill,
+    borderWidth: 1,
     gap: 4,
   },
-  badgeText: {
-    fontSize: 12,
-    color: '#666',
+  metaText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
-  content: {
-    padding: 20,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#444',
-    marginBottom: 12,
-  },
-  bulletItem: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#444',
-    marginBottom: 8,
-    paddingLeft: 8,
-  },
-  footer: {
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#fff',
+  salaryCard: {
     flexDirection: 'row',
+    width: '100%',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  salaryInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  aiButton: {
+  salaryIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  salaryDivider: {
+    width: 1,
+    height: 30,
+    marginHorizontal: Spacing.md,
+  },
+  postedInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    gap: 12,
   },
-  aiButtonText: {
-    color: '#007AFF',
+  salaryLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
     fontWeight: '600',
-    fontSize: 16,
   },
-  applyButton: {
-    flex: 1,
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  salaryValue: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  section: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',    marginBottom: Spacing.md,
+    gap: 10,
+  },
+  sectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  disabledButton: {
-    opacity: 0.6,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
   },
-  applyButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  descriptionContainer: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  descriptionText: {
+    fontSize: 15,
+    lineHeight: 24,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
-  tag: {
-    backgroundColor: '#EBF5FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  tagBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.pill,
+    borderWidth: 1,
   },
   tagText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
   },
-  relatedJobsContainer: {
-    flexDirection: 'row',
-    gap: 12,
+  relatedJobsScroll: {
+    marginHorizontal: -Spacing.xl,
+    paddingLeft: Spacing.xl,
   },
   relatedJobCard: {
-    width: 160,
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 12,
+    width: 240,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginRight: Spacing.md,
     borderWidth: 1,
-    borderColor: '#eee',
+    gap: 12,
+  },
+  relatedJobHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  relatedLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   relatedJobCompany: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  relatedJobFooter: {
+    flexDirection: 'row',    alignItems: 'center',
+    gap: 4,
   },
   relatedJobLocation: {
     fontSize: 12,
-    color: '#007AFF',
-    marginTop: 4,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 34 : Spacing.xl,
+    flexDirection: 'row',
+    gap: Spacing.md,    borderTopWidth: 1,
+  },
+  aiButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    gap: 8,
+  },
+  aiIconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aiButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  applyButton: {
+    flex: 1.5,
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: '#fff',    fontSize: 16,
+    fontWeight: '800',
   },
   modalOverlay: {
     flex: 1,
@@ -639,132 +825,145 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    borderTopLeftRadius: BorderRadius.xl * 2,
+    borderTopRightRadius: BorderRadius.xl * 2,
+    padding: Spacing.xl,
     maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   aiHeaderTitle: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  scoreContainer: {
+  scoreCard: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
     alignItems: 'center',
-    marginVertical: 20,
-    padding: 20,
-    backgroundColor: '#F0F7FF',
-    borderRadius: 16,
+    marginBottom: Spacing.xl,
   },
   scoreLabel: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '700',
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
   scoreValue: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontWeight: '900',
+    marginBottom: Spacing.md,
+  },
+  progressBarBg: {
+    height: 6,
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   aiAdviceSection: {
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   aiSectionTitle: {
     fontSize: 18,
-    marginBottom: 10,
-    color: '#333',
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   adviceItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 8,
-    paddingRight: 10,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+    alignItems: 'center',
+    gap: 12,
   },
   adviceText: {
-    fontSize: 14,
-    color: '#444',
-    lineHeight: 20,
     flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   closeAiButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: Spacing.md,
   },
   closeAiButtonText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '800',
   },
   resumeSection: {
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   modalLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginBottom: Spacing.md,
+    letterSpacing: 0.5,
+  },
+  loadingResume: {
+    alignItems: 'center',
+    padding: Spacing.xl,
   },
   resumeAttachedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 12,
-    borderRadius: 12,
-    gap: 12,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
   },
   resumeAttachedName: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-  },
-  changeText: {
-    color: '#007AFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
+  changeText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
   uploadBox: {
+    height: 120,
+    borderRadius: BorderRadius.lg,
     borderWidth: 2,
-    borderColor: '#eee',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
   },
   uploadText: {
-    color: '#666',
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
   },
   noteInput: {
+    height: 120,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
-    padding: 12,
-    height: 100,
     textAlignVertical: 'top',
-    marginBottom: 24,
     fontSize: 16,
+    marginBottom: Spacing.xl,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   submitButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  backButton: {
+    padding: 10,
   },
 });

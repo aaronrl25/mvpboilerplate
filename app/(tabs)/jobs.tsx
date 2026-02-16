@@ -28,7 +28,12 @@ import { Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 
+import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 export default function JobsScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const [jobs, setJobs] = useState<Job[]>([]);
   const [suggestedJobs, setSuggestedJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
@@ -196,31 +201,73 @@ export default function JobsScreen() {
     if (suggestedJobs.length === 0 && !loadingSuggestions) return null;
 
     return (
-      <View style={styles.suggestionsContainer}>
-        <View style={styles.suggestionsHeader}>
-          <IconSymbol name="mappin.and.ellipse" size={18} color="#007AFF" />
-          <ThemedText type="defaultSemiBold" style={styles.suggestionsTitle}>
-            Suggested for You {userLocation?.city ? `in ${userLocation.city}` : 'Nearby'}
-          </ThemedText>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>Suggested for You</ThemedText>
+          <TouchableOpacity>
+            <ThemedText style={[styles.seeAll, { color: theme.primary }]}>See All</ThemedText>
+          </TouchableOpacity>
         </View>
         
         {loadingSuggestions ? (
-          <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 20 }} />
+          <View style={styles.suggestionList}>
+            {[1, 2].map(i => (
+              <View key={i} style={[styles.suggestionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Skeleton width="40%" height={12} style={{ marginBottom: 8 }} />
+                <Skeleton width="80%" height={16} style={{ marginBottom: 8 }} />
+                <Skeleton width="60%" height={12} />
+              </View>
+            ))}
+          </View>
         ) : (
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.suggestionsList}
+            contentContainerStyle={styles.suggestionList}
           >
             {suggestedJobs.map(job => (
               <TouchableOpacity 
                 key={job.id} 
-                style={styles.suggestionCard}
+                style={[styles.suggestionCard, { backgroundColor: theme.surface, borderColor: theme.border, ...Shadows.sm }]}
                 onPress={() => router.push(`/job/${job.id}`)}
               >
-                <ThemedText style={styles.suggestionCompany} numberOfLines={1}>{job.company}</ThemedText>
-                <ThemedText type="defaultSemiBold" style={styles.suggestionTitleText} numberOfLines={1}>{job.title}</ThemedText>
-                <ThemedText style={styles.suggestionLocation} numberOfLines={1}>{job.location}</ThemedText>
+                <View style={styles.suggestionHeader}>
+                  <Image 
+                    source={{ uri: `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com` }} 
+                    style={[styles.suggestionLogo, { backgroundColor: theme.background }]}
+                    defaultSource={require('@/assets/images/icon.png')}
+                  />
+                  <View style={styles.suggestionInfo}>
+                    <ThemedText style={[styles.suggestionTitle, { color: theme.text }]} numberOfLines={1}>
+                      {job.title}
+                    </ThemedText>
+                    <ThemedText style={[styles.suggestionCompany, { color: theme.textSecondary }]} numberOfLines={1}>
+                      {job.company}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                <View style={styles.suggestionDetails}>
+                  <View style={styles.suggestionDetailItem}>
+                    <IconSymbol name="mappin.and.ellipse" size={12} color={theme.textTertiary} />
+                    <ThemedText style={[styles.suggestionDetailText, { color: theme.textSecondary }]}>
+                      {job.location}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.suggestionDetailItem}>
+                    <IconSymbol name="briefcase" size={12} color={theme.textTertiary} />
+                    <ThemedText style={[styles.suggestionDetailText, { color: theme.textSecondary }]}>
+                      {job.type}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                <View style={styles.suggestionFooter}>
+                  <ThemedText style={[styles.suggestionSalary, { color: theme.primary }]}>
+                    {job.salaryRange || '$80k - $120k'}
+                  </ThemedText>
+                  <IconSymbol name="chevron.right" size={16} color={theme.primary} />
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -231,59 +278,77 @@ export default function JobsScreen() {
 
   const JobTypeFilter = ({ type }: { type: JobType }) => (
     <TouchableOpacity 
-      style={[styles.filterOption, filters.type === type && styles.filterOptionActive]}
+      style={[
+        styles.tag, 
+        { borderColor: theme.border },
+        filters.type === type && { backgroundColor: theme.primary, borderColor: theme.primary }
+      ]}
       onPress={() => setFilters(prev => ({ ...prev, type: prev.type === type ? undefined : type }))}
     >
-      <ThemedText style={[styles.filterOptionText, filters.type === type && styles.filterOptionTextActive]}>
+      <ThemedText style={[
+        styles.tagText, 
+        { color: theme.textSecondary },
+        filters.type === type && { color: '#fff' }
+      ]}>
         {type}
       </ThemedText>
     </TouchableOpacity>
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <ThemedText type="title">Search Jobs</ThemedText>
-            <ThemedText style={styles.subtitle}>Find your next career opportunity</ThemedText>
+            <ThemedText style={[styles.greeting, { color: theme.textSecondary }]}>Hello, {user?.displayName?.split(' ')[0] || 'there'} 👋</ThemedText>
+            <ThemedText type="title" style={[styles.title, { color: theme.text }]}>Find Your Next Opportunity</ThemedText>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.iconButton} 
-              onPress={() => setIsFilterModalVisible(true)}
-            >
-              <IconSymbol name="slider.horizontal.3" size={24} color="#007AFF" />
+            <TouchableOpacity style={[styles.circleButton, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+              <IconSymbol name="bell" size={20} color={theme.text} />
+              <View style={[styles.notificationDot, { backgroundColor: theme.error }]} />
             </TouchableOpacity>
             {isEmployer && (
-               <TouchableOpacity style={styles.createButton} onPress={navigateToCreateJob}>
+               <TouchableOpacity 
+                style={[styles.createButton, { backgroundColor: theme.primary, ...Shadows.md }]} 
+                onPress={navigateToCreateJob}
+              >
                  <IconSymbol name="plus" size={24} color="#fff" />
                </TouchableOpacity>
              )}
           </View>
         </View>
-      </ThemedView>
+      </View>
       
-      <View style={styles.searchContainer}>
-        <SearchBar 
-          placeholder="Search title or company..."
-          onSearch={setSearchQuery} 
-        />
+      <View style={styles.searchSection}>
+        <View style={styles.searchContainer}>
+          <SearchBar 
+            placeholder="Search roles, companies..."
+            onSearch={setSearchQuery} 
+          />
+          <TouchableOpacity 
+            style={[styles.filterButton, { backgroundColor: theme.primary, ...Shadows.md }]} 
+            onPress={() => setIsFilterModalVisible(true)}
+          >
+            <IconSymbol name="slider.horizontal.3" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        
         {(searchQuery.length > 0 || filters.location || filters.tags.length > 0) && !isEmployer && (
           <TouchableOpacity 
-            style={styles.saveSearchButton}
+            style={[styles.saveSearchButton, { backgroundColor: theme.primary + '10', borderColor: theme.primary + '30' }]}
             onPress={handleSaveSearch}
           >
-            <IconSymbol name="bell.badge" size={16} color="#007AFF" />
-            <ThemedText style={styles.saveSearchText}>Save Search</ThemedText>
+            <IconSymbol name="bell.badge.fill" size={14} color={theme.primary} />
+            <ThemedText style={[styles.saveSearchText, { color: theme.primary }]}>Alert me for new matches</ThemedText>
           </TouchableOpacity>
         )}
       </View>
       
       {loading ? (
-        <View style={styles.listContent}>
+        <View style={styles.listContainer}>
           {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} style={styles.skeletonCard}>
+            <View key={i} style={[styles.skeletonCard, { marginHorizontal: Spacing.lg, marginBottom: Spacing.md, padding: Spacing.md, borderRadius: BorderRadius.lg, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }]}>
               <Skeleton width="40%" height={16} style={{ marginBottom: 12 }} />
               <Skeleton width="80%" height={24} style={{ marginBottom: 12 }} />
               <Skeleton width="60%" height={16} />
@@ -291,10 +356,10 @@ export default function JobsScreen() {
           ))}
         </View>
       ) : error ? (
-        <View style={styles.centerContainer}>
+        <View style={styles.emptyContainer}>
           <ThemedText>{error}</ThemedText>
-          <TouchableOpacity style={styles.retryButton} onPress={() => loadJobs(true)}>
-            <ThemedText style={styles.retryText}>Retry</ThemedText>
+          <TouchableOpacity style={[styles.applyButton, { width: 120, height: 44 }]} onPress={() => loadJobs(true)}>
+            <ThemedText style={styles.buttonText}>Retry</ThemedText>
           </TouchableOpacity>
         </View>
       ) : filteredJobs.length === 0 ? (
@@ -310,13 +375,13 @@ export default function JobsScreen() {
           renderItem={renderItem}
           ListHeaderComponent={renderHeader}
           keyExtractor={(item, index) => item.id || index.toString()}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#007AFF']} />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.primary]} />
           }
         />
       )}
@@ -329,28 +394,29 @@ export default function JobsScreen() {
         onRequestClose={() => setIsFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalContent}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="subtitle">Filters</ThemedText>
+              <ThemedText style={styles.modalTitle}>Filters</ThemedText>
               <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
-                <IconSymbol name="xmark" size={24} color="#000" />
+                <IconSymbol name="xmark" size={24} color={theme.icon} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Location</ThemedText>
+                <ThemedText style={[styles.filterLabel, { color: theme.text }]}>Location</ThemedText>
                 <TextInput
-                  style={styles.locationInput}
+                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
                   placeholder="e.g. San Francisco, Remote"
+                  placeholderTextColor={theme.textTertiary}
                   value={filters.location}
                   onChangeText={(val) => setFilters(prev => ({ ...prev, location: val }))}
                 />
               </View>
 
               <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Job Type</ThemedText>
-                <View style={styles.filterOptionsGrid}>
+                <ThemedText style={[styles.filterLabel, { color: theme.text }]}>Job Type</ThemedText>
+                <View style={styles.tagsContainer}>
                   {(['Full-time', 'Part-time', 'Contract', 'Internship'] as JobType[]).map(type => (
                     <JobTypeFilter key={type} type={type} />
                   ))}
@@ -358,25 +424,30 @@ export default function JobsScreen() {
               </View>
 
               <View style={styles.filterSection}>
-                <View style={styles.switchRow}>
-                  <ThemedText style={styles.filterLabel}>Remote Only</ThemedText>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <ThemedText style={[styles.filterLabel, { color: theme.text, marginBottom: 0 }]}>Remote Only</ThemedText>
                   <Switch
                     value={filters.remote}
                     onValueChange={(val) => setFilters(prev => ({ ...prev, remote: val }))}
-                    trackColor={{ false: '#767577', true: '#007AFF' }}
+                    trackColor={{ false: theme.border, true: theme.primary }}
+                    thumbColor="#fff"
                   />
                 </View>
               </View>
 
               <View style={styles.filterSection}>
-                <ThemedText style={styles.filterLabel}>Skills / Tags</ThemedText>
-                <View style={styles.filterOptionsGrid}>
+                <ThemedText style={[styles.filterLabel, { color: theme.text }]}>Skills / Tags</ThemedText>
+                <View style={styles.tagsContainer}>
                   {COMMON_TAGS.map(tag => {
                     const isSelected = filters.tags.includes(tag);
                     return (
                       <TouchableOpacity 
                         key={tag}
-                        style={[styles.filterOption, isSelected && styles.filterOptionActive]}
+                        style={[
+                          styles.tag, 
+                          { borderColor: theme.border },
+                          isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+                        ]}
                         onPress={() => {
                           setFilters(prev => {
                             const newTags = isSelected 
@@ -386,7 +457,11 @@ export default function JobsScreen() {
                           });
                         }}
                       >
-                        <ThemedText style={[styles.filterOptionText, isSelected && styles.filterOptionTextActive]}>
+                        <ThemedText style={[
+                          styles.tagText, 
+                          { color: theme.textSecondary },
+                          isSelected && { color: '#fff' }
+                        ]}>
                           {tag}
                         </ThemedText>
                       </TouchableOpacity>
@@ -396,12 +471,20 @@ export default function JobsScreen() {
               </View>
             </ScrollView>
 
-            <TouchableOpacity 
-              style={styles.applyButton}
-              onPress={() => setIsFilterModalVisible(false)}
-            >
-              <ThemedText style={styles.applyButtonText}>Apply Filters</ThemedText>
-            </TouchableOpacity>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={[styles.resetButton, { borderColor: theme.border }]}
+                onPress={() => setFilters({ location: '', tags: [] })}
+              >
+                <ThemedText style={[styles.buttonText, { color: theme.textSecondary }]}>Reset</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.applyButton, { backgroundColor: theme.primary, ...Shadows.md }]}
+                onPress={() => setIsFilterModalVisible(false)}
+              >
+                <ThemedText style={[styles.buttonText, { color: '#fff' }]}>Apply</ThemedText>
+              </TouchableOpacity>
+            </View>
           </ThemedView>
         </View>
       </Modal>
@@ -414,215 +497,275 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 10,
+    paddingTop: 64,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  greeting: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    maxWidth: 240,
+    lineHeight: 32,
+  },
   headerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
+    gap: 12,
   },
-  iconButton: {
-    padding: 8,
-  },
-  createButton: {
-    backgroundColor: '#007AFF',
+  circleButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    position: 'relative',
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+  notificationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  createButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchSection: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   searchContainer: {
-    paddingHorizontal: 0,
-    marginBottom: 10,
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   saveSearchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F7FF',
-    paddingVertical: 8,
-    marginHorizontal: 20,
-    borderRadius: 8,
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: '#D0E7FF',
-    marginTop: -5,
-    marginBottom: 10,
-    gap: 6,
+    borderStyle: 'dashed',
   },
   saveSearchText: {
     fontSize: 13,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  section: {
+    marginBottom: Spacing.xxl,
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 80,
-  },
-  suggestionsContainer: {
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  suggestionsHeader: {
+  sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
-  suggestionsTitle: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#333',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
   },
-  suggestionsList: {
-    paddingRight: 16,
+  seeAll: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  suggestionList: {
+    paddingHorizontal: Spacing.xl,
+    gap: 16,
   },
   suggestionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    width: 280,
     padding: 16,
-    marginRight: 12,
-    width: 200,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: '#e1e4e8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  suggestionLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+  },
+  suggestionInfo: {
+    flex: 1,
+  },
+  suggestionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   suggestionCompany: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  suggestionTitleText: {
-    fontSize: 14,
-    color: '#000', 
-    marginBottom: 8,
-  },
-  suggestionLocation: {
-    fontSize: 12,
-    color: '#007AFF',
-  },
-  footerLoader: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  retryButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  skeletonCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+  suggestionDetails: {
+    flexDirection: 'row',
+    gap: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
   },
-  // Modal Styles
+  suggestionDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  suggestionDetailText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  suggestionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  suggestionSalary: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  listContainer: {
+    paddingBottom: 100,
+  },
+  listHeader: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xl * 2,
+    gap: Spacing.md,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center', 
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: Spacing.xl,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
-  modalBody: {
-    marginBottom: 20,
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
   },
   filterSection: {
-    marginBottom: 25,
+    marginBottom: 28,
   },
   filterLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 12,
   },
-  locationInput: {
+  input: {
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
   },
-  filterOptionsGrid: {
+  tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
-  filterOption: {
+  tag: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.pill,
     borderWidth: 1,
-    borderColor: '#ddd',
   },
-  filterOptionActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+  tagText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  filterOptionText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  filterOptionTextActive: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  switchRow: {
+  modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: Spacing.xl,
+    paddingBottom: Spacing.lg,
+  },
+  resetButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   applyButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
+    flex: 2,
+    height: 52,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  applyButtonText: {
-    color: '#fff',
+  buttonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+  listContainer: {
+    paddingBottom: 100,
+  },
+  footerLoader: {
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+  },
+  skeletonCard: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
   },
 });
