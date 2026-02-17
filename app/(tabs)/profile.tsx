@@ -20,7 +20,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { logout, updateAuthProfile } from '@/store/authSlice';
 import { userService, UserProfile } from '@/services/userService';
 import * as DocumentPicker from 'expo-document-picker';
-import { applicationService, JobApplication } from '@/services/applicationService';
 import { Job, jobService } from '@/services/jobService';
 import { subscriptionService, SUBSCRIPTION_PLANS } from '@/services/subscriptionService';
 import { locationService, LocationData } from '@/services/locationService';
@@ -37,11 +36,9 @@ export default function ProfileScreen() {
   
   const [loading, setLoading] = useState(true);
   const [updatingLocation, setUpdatingLocation] = useState(false);
-  const [loadingApps, setLoadingApps] = useState(false);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [loadingSavedSearches, setLoadingSavedSearches] = useState(false);
-  const [profileData, setProfileData] = useState<UserProfile | null>(null);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [employerJobs, setEmployerJobs] = useState<Job[]>([]);
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -64,7 +61,6 @@ export default function ProfileScreen() {
     if (profileData.role === 'employer') {
       fetchEmployerJobs();
     } else {
-      fetchApplications();
       fetchSavedSearches();
     }
   }, [user?.uid, profileData?.role]);
@@ -84,19 +80,6 @@ export default function ProfileScreen() {
       console.error('Error fetching profile:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchApplications = async () => {
-    if (!user) return;
-    try {
-      setLoadingApps(true);
-      const data = await applicationService.getSeekerApplications(user.uid);
-      setApplications(data);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setLoadingApps(false);
     }
   };
 
@@ -472,27 +455,15 @@ export default function ProfileScreen() {
                )}
              </View>
 
-             <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
-               <ThemedText style={[styles.sectionTitle, { color: theme.text, marginBottom: Spacing.md }]}>My Applications</ThemedText>
-               {loadingApps ? (
-                 <ActivityIndicator color={theme.primary} />
-               ) : applications.length > 0 ? (
-                 applications.map((app) => (
-                   <View key={app.id} style={[styles.appCard, { backgroundColor: theme.background }]}>
-                     <View style={styles.appInfo}>
-                       <ThemedText style={[styles.appTitle, { color: theme.text }]}>{app.jobTitle}</ThemedText>
-                       <ThemedText style={[styles.appCompany, { color: theme.textSecondary }]}>{app.company}</ThemedText>
-                       <ThemedText style={[styles.appDate, { color: theme.textTertiary }]}>{formatDate(app.createdAt)}</ThemedText>
-                     </View>
-                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor(app.status) }]}>
-                       <ThemedText style={styles.statusText}>{app.status}</ThemedText>
-                     </View>
-                   </View>
-                 ))
-               ) : (
-                 <ThemedText style={[styles.emptyText, { color: theme.textTertiary }]}>You haven't applied to any jobs yet.</ThemedText>
-               )}
-             </View>
+             {profileData.role === 'job_seeker' && (
+               <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
+                 <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/jobseeker/myapplications')}>
+                   <IconSymbol name="doc.text.fill" size={24} color={theme.text} style={{ marginRight: Spacing.sm }} />
+                   <ThemedText style={{ fontSize: 16, fontWeight: '600', flex: 1 }}>My Applications</ThemedText>
+                   <IconSymbol name="chevron.right" size={20} color={theme.text} />
+                 </TouchableOpacity>
+               </View>
+             )}
 
              <View style={[styles.section, { backgroundColor: theme.surface, ...Shadows.sm }]}>
                <View style={styles.sectionHeader}>
@@ -911,6 +882,22 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: Spacing.md,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.light.border,
+  },
+  menuIcon: {
+    marginRight: Spacing.sm,
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
   },
   // Modal styles
   modalOverlay: {
