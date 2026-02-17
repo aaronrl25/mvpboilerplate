@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Linking,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -17,12 +18,14 @@ import { userService, UserProfile } from '@/services/userService';
 import { SUBSCRIPTION_PLANS, subscriptionService, SubscriptionPlan } from '@/services/subscriptionService';
 import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useStripe } from '@stripe/stripe-react-native';
 
 export default function SubscriptionScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
   const { user } = useAppSelector((state) => state.auth);
   const router = useRouter();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -59,11 +62,18 @@ export default function SubscriptionScreen() {
           onPress: async () => {
             try {
               setUpdatingPlan(plan.id);
-              await subscriptionService.updateUserPlan(user!.uid, plan.id);
-              await fetchProfile();
-              Alert.alert('Success', `You are now on the ${plan.name} plan!`);
+              const result = await subscriptionService.updateUserPlan(user!.uid, plan.id);
+
+              if (result?.url) {
+                // For Stripe Checkout (redirect to browser)
+                Linking.openURL(result.url);
+              } else {
+                // Potentially handle PaymentSheet directly if we ever switch to it
+                Alert.alert('Error', 'Failed to get Stripe checkout URL.');
+              }
             } catch (error) {
-              Alert.alert('Error', 'Failed to update subscription plan');
+              console.error('Error during plan selection:', error);
+              Alert.alert('Error', 'Failed to initiate subscription change.');
             } finally {
               setUpdatingPlan(null);
             }

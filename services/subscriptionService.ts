@@ -1,5 +1,8 @@
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, getFunctions, httpsCallable } from 'firebase/firestore';
 import { userService, SubscriptionPlanId } from './userService';
+import { app } from './firebase';
+
+const functions = getFunctions(app);
 
 export interface SubscriptionPlan {
   id: SubscriptionPlanId;
@@ -65,20 +68,20 @@ export const subscriptionService = {
     return SUBSCRIPTION_PLANS.find(p => p.id === planId) || SUBSCRIPTION_PLANS[0];
   },
 
-  updateUserPlan: async (userId: string, planId: SubscriptionPlanId): Promise<void> => {
+  updateUserPlan: async (userId: string, planId: SubscriptionPlanId): Promise<{ sessionId: string, url: string } | void> => {
     try {
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
       if (!plan) throw new Error('Invalid plan ID');
 
-      // In a real app, this would involve a payment gateway like Stripe
-      // For this MVP, we'll directly update the Firestore document
-      await userService.updateProfile(userId, {
-        subscriptionPlan: planId,
-        subscriptionStatus: 'active',
-        subscriptionEndDate: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      });
+      // Call the Firebase Cloud Function to create a Stripe Checkout session
+      const createStripeCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
+      const result = await createStripeCheckoutSession({ planId: planId });
+
+      const { sessionId, url } = result.data as { sessionId: string, url: string };
+      return { sessionId, url };
+
     } catch (error) {
-      console.error('Error updating subscription plan:', error);
+      console.error('Error creating Stripe Checkout session:', error);
       throw error;
     }
   },
