@@ -1,106 +1,111 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase';
-
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth, logoutUser } from '@/services/firebase';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { logout } from '@/store/authSlice';
+import { Colors } from '@/constants/theme';
 
 export default function ProfileScreen() {
-  const { user } = useAppSelector((state) => state.auth);
-  const dispatch = useAppDispatch();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ensureUserInFirestore = async () => {
-      if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.email?.split('@')[0] || 'User',
-            createdAt: new Date().toISOString(),
-            photoURL: user.photoURL || '',
-          });
-        }
-      }
-    };
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    ensureUserInFirestore();
-  }, [user]);
-
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
+  if (loading) {
+    return (
+      <StyledView style={styles.centerContent}>
+        <ActivityIndicator size="large" color={Colors.dark.tint} />
+      </StyledView>
+    );
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Profile</ThemedText>
-      </ThemedView>
+    <StyledView style={styles.container}>
+      <StyledView style={styles.header}>
+        <StyledText type="title">Profile</StyledText>
+      </StyledView>
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.avatarSection}>
           <View style={styles.avatarPlaceholder}>
-            <IconSymbol name="person.fill" size={60} color="#fff" />
+            <IconSymbol name="person.fill" size={60} color={Colors.dark.background} />
           </View>
-          <ThemedText type="subtitle" style={styles.userName}>
+          <StyledText type="body" style={styles.userName}>
             {user?.email?.split('@')[0] || 'User'}
-          </ThemedText>
-          <ThemedText style={styles.userEmail}>{user?.email}</ThemedText>
+          </StyledText>
+          <StyledText style={styles.userEmail}>{user?.email}</StyledText>
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Account Information</ThemedText>
+          <StyledText type="body" style={styles.sectionTitle}>Account Information</StyledText>
           <View style={styles.infoRow}>
-            <IconSymbol name="paperplane.fill" size={20} color="#666" />
+            <IconSymbol name="envelope.fill" size={20} color={Colors.dark.icon} />
             <View style={styles.infoText}>
-              <ThemedText type="defaultSemiBold">Email</ThemedText>
-              <ThemedText>{user?.email}</ThemedText>
+              <StyledText type="body">Email</StyledText>
+              <StyledText style={styles.infoDetailText}>{user?.email}</StyledText>
             </View>
           </View>
           <View style={styles.infoRow}>
-            <IconSymbol name="house.fill" size={20} color="#666" />
+            <IconSymbol name="number" size={20} color={Colors.dark.icon} />
             <View style={styles.infoText}>
-              <ThemedText type="defaultSemiBold">User ID</ThemedText>
-              <ThemedText numberOfLines={1} ellipsizeMode="tail">{user?.uid}</ThemedText>
+              <StyledText type="body">User ID</StyledText>
+              <StyledText numberOfLines={1} ellipsizeMode="tail" style={styles.infoDetailText}>{user?.uid}</StyledText>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Settings</ThemedText>
+          <StyledText type="body" style={styles.sectionTitle}>Settings</StyledText>
           <TouchableOpacity style={styles.menuItem}>
-            <IconSymbol name="gearshape.fill" size={20} color="#666" />
-            <ThemedText style={styles.menuItemText}>Edit Profile</ThemedText>
-            <IconSymbol name="chevron.right" size={20} color="#ccc" />
+            <IconSymbol name="pencil" size={20} color={Colors.dark.icon} />
+            <StyledText style={styles.menuItemText}>Edit Profile</StyledText>
+            <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <ThemedText style={styles.logoutText}>Logout</ThemedText>
+          <StyledText style={styles.logoutText}>Logout</StyledText>
         </TouchableOpacity>
       </ScrollView>
-    </ThemedView>
+    </StyledView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.dark.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 10,
+    backgroundColor: Colors.dark.background,
   },
   scrollContent: {
     padding: 20,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.background,
   },
   avatarSection: {
     alignItems: 'center',
@@ -110,21 +115,19 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#2196F3',
+    backgroundColor: Colors.dark.tint,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 15,
   },
   userName: {
     textTransform: 'capitalize',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   userEmail: {
     opacity: 0.6,
+    marginTop: 2,
   },
   section: {
     marginBottom: 25,
@@ -133,14 +136,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     opacity: 0.8,
+    fontWeight: '600',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
     gap: 15,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    padding: 12,
+    backgroundColor: Colors.dark.card,
+    padding: 15,
     borderRadius: 10,
   },
   infoText: {
@@ -150,7 +154,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: Colors.dark.card,
     borderRadius: 10,
     gap: 15,
   },
@@ -161,13 +165,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 15,
     borderRadius: 10,
-    backgroundColor: '#FFF1F0',
+    backgroundColor: '#c2232325',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFA39E',
+    borderColor: '#c22323',
   },
   logoutText: {
-    color: '#F5222D',
+    color: Colors.dark.danger,
     fontWeight: '600',
+  },
+  infoDetailText: {
+    opacity: 0.7,
   },
 });

@@ -1,13 +1,13 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, Switch, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
   const [isNotificationsEnabled, setIsNotificationsEnabled] = React.useState(true);
 
   const toggleNotifications = () => setIsNotificationsEnabled(previousState => !previousState);
@@ -19,13 +19,13 @@ export default function SettingsScreen() {
       disabled={isSwitch}
     >
       <View style={styles.settingItemLeft}>
-        <IconSymbol name={icon} size={22} color="#666" />
-        <ThemedText style={styles.settingLabel}>{label}</ThemedText>
+        <IconSymbol name={icon} size={22} color={Colors.dark.text} />
+        <StyledText style={styles.settingLabel}>{label}</StyledText>
       </View>
       {isSwitch ? (
         <Switch
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={value ? '#2196F3' : '#f4f3f4'}
+          trackColor={{ false: '#767577', true: Colors.dark.tint }}
+          thumbColor={value ? Colors.dark.tint : '#f4f3f4'}
           onValueChange={toggleNotifications}
           value={value}
         />
@@ -36,13 +36,13 @@ export default function SettingsScreen() {
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Settings</ThemedText>
-      </ThemedView>
+    <StyledView style={styles.container}>
+      <StyledView style={styles.header}>
+        <StyledText type="title">Settings</StyledText>
+      </StyledView>
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Preferences</ThemedText>
+        <StyledText type="caption" style={styles.sectionTitle}>Preferences</StyledText>
         <View style={styles.section}>
           <SettingItem 
             icon="moon.fill" 
@@ -57,7 +57,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Privacy & Security</ThemedText>
+        <StyledText type="caption" style={styles.sectionTitle}>Privacy & Security</StyledText>
         <View style={styles.section}>
           <SettingItem 
             icon="lock.fill" 
@@ -66,7 +66,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>About</ThemedText>
+        <StyledText type="caption" style={styles.sectionTitle}>About</StyledText>
         <View style={styles.section}>
           <SettingItem 
             icon="info.circle.fill" 
@@ -74,22 +74,24 @@ export default function SettingsScreen() {
             onPress={() => {}} 
           />
           <View style={styles.versionInfo}>
-            <ThemedText style={styles.versionText}>v1.0.0 (Beta)</ThemedText>
+            <StyledText style={styles.versionText}>v1.0.0 (Beta)</StyledText>
           </View>
         </View>
       </ScrollView>
-    </ThemedView>
+    </StyledView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.dark.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 10,
+    backgroundColor: Colors.dark.background,
   },
   scrollContent: {
     padding: 20,
@@ -100,9 +102,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     opacity: 0.6,
     textTransform: 'uppercase',
+    color: Colors.dark.text,
   },
   section: {
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: Colors.dark.card,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 20,
@@ -113,7 +116,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   settingItemLeft: {
     flexDirection: 'row',
@@ -122,6 +125,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
+    color: Colors.dark.text,
   },
   versionInfo: {
     padding: 16,
@@ -130,5 +134,6 @@ const styles = StyleSheet.create({
   versionText: {
     opacity: 0.4,
     fontSize: 12,
+    color: Colors.dark.text,
   },
 });

@@ -1,40 +1,40 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-import { Provider } from 'react-redux';
-
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { subscribeToAuthChanges } from '@/services/firebase';
-import { store } from '@/store';
-import { setUser } from '@/store/authSlice';
-
-// No tabs, using only stack navigation
+import { Colors } from '@/constants/theme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  useEffect(() => {
-    // Set up Firebase auth state listener
-    const unsubscribe = subscribeToAuthChanges((user) => {
-      store.dispatch(setUser(user));
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const CineMatchTheme = {
+    dark: colorScheme === 'dark',
+    colors: {
+      primary: Colors.dark.tint,
+      background: Colors.dark.background,
+      card: Colors.dark.card,
+      text: Colors.dark.text,
+      border: Colors.dark.background, // No borders for a cleaner look
+      notification: Colors.dark.tint,
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' as const },
+      medium: { fontFamily: 'System', fontWeight: '500' as const },
+      bold: { fontFamily: 'System', fontWeight: '700' as const },
+      heavy: { fontFamily: 'System', fontWeight: '800' as const },
+    },
+  };
 
   return (
-    <Provider store={store}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={CineMatchTheme}>
         <Stack>
           <Stack.Screen name="auth" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="movie" options={{ headerShown: true }} />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
-    </Provider>
+    </GestureHandlerRootView>
   );
 }

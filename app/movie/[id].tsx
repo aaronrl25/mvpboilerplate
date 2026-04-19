@@ -1,14 +1,15 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { getMovieDetails, MovieDetails } from '@/services/api';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
+import { getMovieDetails, Movie } from '@/services/movieService';
+import { Colors } from '@/constants/theme';
 
 export default function MovieDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [movie, setMovie] = useState<MovieDetails | null>(null);
+  const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,78 +33,49 @@ export default function MovieDetailsScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-      </ThemedView>
+      <StyledView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.dark.tint} />
+      </StyledView>
     );
   }
 
   if (error || !movie) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>{error || 'Movie not found'}</ThemedText>
-      </ThemedView>
+      <StyledView style={styles.container}>
+        <StyledText>{error || 'Movie not found'}</StyledText>
+      </StyledView>
     );
   }
-
+  
   return (
     <ScrollView style={styles.scrollView}>
       <Stack.Screen options={{ title: movie.Title }} />
-      <ThemedView style={styles.container}>
+      <StyledView style={styles.container}>
         {movie.Poster && movie.Poster !== 'N/A' ? (
           <Image source={{ uri: movie.Poster }} style={styles.poster} resizeMode="cover" />
         ) : (
-          <ThemedView style={styles.noPoster}>
-            <ThemedText>No Poster Available</ThemedText>
-          </ThemedView>
+          <StyledView style={styles.noPoster}>
+            <StyledText>No Poster Available</StyledText>
+          </StyledView>
         )}
 
-        <ThemedView style={styles.detailsContainer}>
-          <ThemedText type="title" style={styles.title}>
+        <View style={styles.detailsContainer}>
+          <StyledText type="title" style={styles.title}>
             {movie.Title} ({movie.Year})
-          </ThemedText>
+          </StyledText>
 
-          <ThemedView style={styles.infoRow}>
-            <ThemedText type="defaultSemiBold">{movie.Rated}</ThemedText>
-            <ThemedText> • </ThemedText>
-            <ThemedText>{movie.Runtime}</ThemedText>
-            <ThemedText> • </ThemedText>
-            <ThemedText>{movie.Genre}</ThemedText>
-          </ThemedView>
+          <View style={styles.ratingContainer}>
+            <StyledText type="body">IMDb Rating: </StyledText>
+            <StyledText>{movie.imdbRating}/10</StyledText>
+          </View>
 
-          <ThemedView style={styles.ratingContainer}>
-            <ThemedText type="defaultSemiBold">IMDb Rating: </ThemedText>
-            <ThemedText>{movie.imdbRating}/10</ThemedText>
-          </ThemedView>
+          <View style={styles.section}>
+            <StyledText type="caption" style={styles.sectionTitle}>Plot</StyledText>
+            <StyledText style={styles.plot}>{movie.Plot}</StyledText>
+          </View>
 
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle">Plot</ThemedText>
-            <ThemedText style={styles.plot}>{movie.Plot}</ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle">Cast</ThemedText>
-            <ThemedText>{movie.Actors}</ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle">Director</ThemedText>
-            <ThemedText>{movie.Director}</ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle">Writer</ThemedText>
-            <ThemedText>{movie.Writer}</ThemedText>
-          </ThemedView>
-
-          {movie.Awards !== 'N/A' && (
-            <ThemedView style={styles.section}>
-              <ThemedText type="subtitle">Awards</ThemedText>
-              <ThemedText>{movie.Awards}</ThemedText>
-            </ThemedView>
-          )}
-        </ThemedView>
-      </ThemedView>
+        </View>
+      </StyledView>
     </ScrollView>
   );
 }
@@ -111,15 +83,18 @@ export default function MovieDetailsScreen() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: Colors.dark.background,
   },
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: Colors.dark.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.dark.background,
   },
   poster: {
     width: '100%',
@@ -132,16 +107,17 @@ const styles = StyleSheet.create({
     height: 450,
     borderRadius: 8,
     marginBottom: 16,
-    backgroundColor: '#e0e0e0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   detailsContainer: {
     marginBottom: 16,
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 24,
     marginBottom: 8,
+    color: Colors.dark.text,
   },
   infoRow: {
     flexDirection: 'row',
@@ -154,7 +130,13 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 16,
   },
+  sectionTitle: {
+    fontWeight: 'bold',
+    color: Colors.dark.text,
+    marginBottom: 4,
+  },
   plot: {
     lineHeight: 22,
+    color: Colors.dark.text,
   },
 });

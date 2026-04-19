@@ -1,69 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
-import { MovieCard } from '@/components/MovieCard';
-import { SearchBar } from '@/components/SearchBar';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useAppSelector } from '@/hooks/useRedux';
-import { Movie, searchMovies } from '@/services/api';
+import MovieCard from '@/components/MovieCard';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
+import { getPopularMovies, Movie } from '@/services/movieService';
+import { Colors } from '@/constants/theme';
+import Animated from 'react-native-reanimated';
 
 export default function MoviesScreen() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const { user } = useAppSelector((state) => state.auth);
 
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) return;
-    
-    try {
-      setLoading(true);
-      setSearchQuery(query);
-      setError(null);
-      const response = await searchMovies(query);
-      
-      if (response.Response === 'False') {
-        setError(response.Error || 'No movies found');
-        setMovies([]);
-      } else {
-        setMovies(response.Search);
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getPopularMovies();
+        setMovies(response);
+      } catch (err) {
+        setError('Failed to fetch movies');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Failed to search movies');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const renderItem = ({ item }: { item: Movie }) => <MovieCard movie={item} />;
+    fetchMovies();
+  }, []);
+
+  const renderItem = ({ item }: { item: Movie }) => (
+    <View style={styles.movieCardContainer}>
+      <MovieCard movie={item} translateX={new Animated.Value(0) as any} />
+    </View>
+  );
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Movies</ThemedText>
-      </ThemedView>
-      
-      <SearchBar onSearch={handleSearch} />
-      
+    <StyledView style={styles.container}>
+      <StyledView style={styles.header}>
+        <StyledText type="title">Popular Movies</StyledText>
+      </StyledView>
+
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={Colors.dark.tint} />
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
-          <ThemedText>{error}</ThemedText>
-        </View>
-      ) : movies.length === 0 && searchQuery ? (
-        <View style={styles.centerContainer}>
-          <ThemedText>No movies found for "{searchQuery}"</ThemedText>
-        </View>
-      ) : movies.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <ThemedText>Search for movies to get started</ThemedText>
+          <StyledText>{error}</StyledText>
         </View>
       ) : (
         <FlatList
@@ -75,18 +61,20 @@ export default function MoviesScreen() {
           columnWrapperStyle={styles.columnWrapper}
         />
       )}
-    </ThemedView>
+    </StyledView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.dark.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 10,
+    backgroundColor: Colors.dark.background,
   },
   centerContainer: {
     flex: 1,
@@ -99,5 +87,10 @@ const styles = StyleSheet.create({
   },
   columnWrapper: {
     justifyContent: 'space-between',
+  },
+  movieCardContainer: {
+    width: '48%',
+    marginBottom: 20,
+    height: 300,
   },
 });

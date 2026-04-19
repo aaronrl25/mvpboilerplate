@@ -9,38 +9,41 @@ import {
   Image
 } from 'react-native';
 import { router } from 'expo-router';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { userService, UserProfile } from '@/services/userService';
 import { followService } from '@/services/followService';
-import { useAppSelector } from '@/hooks/useRedux';
+import { auth } from '@/services/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function SearchScreen() {
-  const { user: currentUser } = useAppSelector((state) => state.auth);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followLoading, setFollowLoading] = useState(false);
   
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
+  const themeColors = Colors.dark;
 
   useEffect(() => {
-    // Initial load of users
-    loadInitialUsers();
-    if (currentUser) {
-      loadFollowingIds();
-    }
-  }, [currentUser]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadFollowingIds(user.uid);
+      }
+    });
 
-  const loadFollowingIds = async () => {
-    if (!currentUser) return;
+    loadInitialUsers();
+    
+    return () => unsubscribe();
+  }, []);
+
+  const loadFollowingIds = async (uid: string) => {
     try {
-      const ids = await followService.getFollowingIds(currentUser.uid);
+      const ids = await followService.getFollowingIds(uid);
       setFollowingIds(ids);
     } catch (error) {
       console.error('Error loading following IDs:', error);
@@ -113,8 +116,8 @@ export default function SearchScreen() {
         )}
       </View>
       <View style={styles.userInfo}>
-        <ThemedText type="defaultSemiBold">{item.displayName}</ThemedText>
-        <ThemedText style={styles.userEmail}>{item.email}</ThemedText>
+        <StyledText type="body">{item.displayName}</StyledText>
+        <StyledText style={styles.userEmail}>{item.email}</StyledText>
       </View>
       {currentUser && item.uid !== currentUser.uid && (
         <TouchableOpacity 
@@ -125,9 +128,9 @@ export default function SearchScreen() {
           onPress={() => handleFollowToggle(item.uid)}
           disabled={followLoading}
         >
-          <ThemedText style={followingIds.includes(item.uid) ? styles.followingButtonText : styles.followButtonText}>
+          <StyledText style={followingIds.includes(item.uid) ? styles.followingButtonText : styles.followButtonText}>
             {followingIds.includes(item.uid) ? 'Following' : 'Follow'}
-          </ThemedText>
+          </StyledText>
         </TouchableOpacity>
       )}
       <IconSymbol name="chevron.right" size={20} color={themeColors.icon} />
@@ -135,12 +138,12 @@ export default function SearchScreen() {
   );
 
   return (
-    <ThemedView style={styles.container}>
+    <StyledView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText type="title">Search Users</ThemedText>
+        <StyledText type="title">Search Users</StyledText>
       </View>
 
-      <View style={[styles.searchContainer, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
+      <View style={[styles.searchContainer, { backgroundColor: '#333' }]}>
         <IconSymbol name="magnifyingglass" size={20} color={themeColors.icon} />
         <TextInput
           style={[styles.searchInput, { color: themeColors.text }]}
@@ -168,12 +171,12 @@ export default function SearchScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.centerContent}>
-              <ThemedText>No users found</ThemedText>
+              <StyledText>No users found</StyledText>
             </View>
           }
         />
       )}
-    </ThemedView>
+    </StyledView>
   );
 }
 
@@ -181,6 +184,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
+    backgroundColor: Colors.dark.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -236,74 +240,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 50,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    height: '85%',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingTop: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#ccc',
-  },
-  modalBody: {
-    padding: 20,
-  },
-  largeAvatarSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  largeAvatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-    overflow: 'hidden',
-  },
-  largeAvatar: {
-    width: 120,
-    height: 120,
-  },
-  modalUserName: {
-    marginBottom: 5,
-  },
-  modalUserEmail: {
-    opacity: 0.6,
-  },
-  detailSection: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    marginBottom: 15,
-    fontSize: 18,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  infoText: {
-    marginLeft: 15,
-  },
-  bioText: {
-    lineHeight: 22,
-    opacity: 0.8,
-  },
   followButton: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 10,
@@ -311,16 +249,14 @@ const styles = StyleSheet.create({
   followingButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: Colors.dark.tint,
   },
   followButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    color: Colors.dark.text,
+    fontWeight: 'bold',
   },
   followingButtonText: {
-    color: '#666',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+    color: Colors.dark.tint,
+    fontWeight: 'bold',
+  }
 });

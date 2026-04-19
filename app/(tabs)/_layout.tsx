@@ -15,19 +15,16 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: Colors.dark.background, // Match the dark theme
+          borderTopColor: Colors.dark.background, // No top border
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="list"
-        options={{
-          title: 'List',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
+          title: 'Swipe',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="film.stack" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -38,31 +35,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
+        name="watchlist" // This will be a new screen
         options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="movies"
-        options={{
-          title: 'Movies',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="film.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="ai"
-        options={{
-          title: 'AI',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="sparkles" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+          title: 'Watchlist',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.and.film" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -72,6 +48,19 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
+        <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+        }}
+      />
+
+      {/* Hide unwanted tabs by setting href to null */}
+      <Tabs.Screen name="ai" options={{ href: null }} />
+      <Tabs.Screen name="following" options={{ href: null }} />
+      <Tabs.Screen name="list" options={{ href: null }} />
+      <Tabs.Screen name="movies" options={{ href: null }} />
     </Tabs>
   );
 }

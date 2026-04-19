@@ -3,17 +3,15 @@ import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWith
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// TODO: Replace with your own Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCGOzuIJB01mP5XKniDy5n-RGBjrzPmCgI",
-  authDomain: "nearminds-c8079.firebaseapp.com",
-  databaseURL: "https://nearminds-c8079-default-rtdb.firebaseio.com",
-  projectId: "nearminds-c8079",
-  storageBucket: "nearminds-c8079.appspot.com",
-  messagingSenderId: "102644372523",
-  appId: "1:102644372523:web:ab8bf2c07f26f81ab1c66e",
-  measurementId: "G-1SBJH1FKNK"
+  apiKey: "AIzaSyCUFZL66Bf_HjkWO0IbpXMuXkcDwwDG1QU",
+  authDomain: "faas-9c562.firebaseapp.com",
+  projectId: "faas-9c562",
+  storageBucket: "faas-9c562.appspot.com",
+  messagingSenderId: "593019462213",
+  appId: "1:593019462213:web:c88be1a1613dc0d6d4392c",
+  measurementId: "G-0ZHL9D5ZHC"
 };
 
 // Initialize Firebase

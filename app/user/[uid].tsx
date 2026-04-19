@@ -1,393 +1,161 @@
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-  FlatList,
-  Alert,
-  Dimensions
-} from 'react-native';
-import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { Video, ResizeMode } from 'expo-av';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useAppSelector } from '@/hooks/useRedux';
-import { userService, UserProfile } from '@/services/userService';
-import { feedService, Post } from '@/services/feedService';
-import { followService } from '@/services/followService';
+import { View, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { StyledText } from '@/components/themed-text';
+import { StyledView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { watchlistService } from '@/services/watchlistService';
+import { getMovieDetails, Movie } from '@/services/movieService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase';
+import { router } from 'expo-router';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const NUM_COLUMNS = 1;
+const POSTER_WIDTH = (width - 40 - (NUM_COLUMNS - 1) * 10) / NUM_COLUMNS;
 
 export default function UserProfileScreen() {
-  const { uid } = useLocalSearchParams<{ uid: string }>();
-  const { user: currentUser } = useAppSelector((state) => state.auth);
-  
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const { uid } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
+  const [user, setUser] = useState<{ displayName: string; email: string } | null>(null);
+  const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (typeof uid !== 'string') return;
 
-    // Subscribe to user details
-    const unsubscribeUser = userService.subscribeToUser(uid, (data) => {
-      setProfile(data);
-    });
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        // Fetch user basic info
+        const userDocRef = doc(db, 'users', uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUser({ 
+            displayName: userData.displayName || userData.email?.split('@')[0] || 'User', 
+            email: userData.email 
+          });
+        }
 
-    // Subscribe to user posts
-    const unsubscribePosts = userService.getUserPosts(uid, (data) => {
-      setPosts(data);
-      setLoading(false);
-      
-      // Check liked status for these posts
-      if (currentUser) {
-        data.forEach(async (post) => {
-          const liked = await feedService.isPostLiked(post.id, currentUser.uid);
-          if (liked) {
-            setLikedPosts(prev => new Set(prev).add(post.id));
-          }
-        });
+        // Fetch liked movies
+        const movieIds = await watchlistService.getWatchlist(uid);
+        const moviePromises = movieIds.map(id => getMovieDetails(id));
+        const movies = await Promise.all(moviePromises);
+        setLikedMovies(movies.filter(m => m) as Movie[]);
+
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
       }
-    });
-
-    // Check follow status
-    if (currentUser && uid !== currentUser.uid) {
-      followService.isFollowing(currentUser.uid, uid).then(setIsFollowing);
-    }
-
-    return () => {
-      unsubscribeUser();
-      unsubscribePosts();
     };
-  }, [uid, currentUser]);
 
-  const handleFollowToggle = async () => {
-    if (!currentUser || !uid || uid === currentUser.uid) return;
-    
-    try {
-      const following = await followService.toggleFollow(currentUser.uid, uid);
-      setIsFollowing(following);
-    } catch (error) {
-      console.error('Error toggling follow:', error);
-      Alert.alert('Error', 'Failed to update follow status');
-    }
-  };
+    fetchUserData();
+  }, [uid]);
 
-  const handleLikeToggle = async (postId: string) => {
-    if (!currentUser) return;
-    try {
-      const liked = await feedService.toggleLike(postId, currentUser.uid);
-      setLikedPosts(prev => {
-        const next = new Set(prev);
-        if (liked) next.add(postId);
-        else next.delete(postId);
-        return next;
-      });
-    } catch (error) {
-      console.error('Error toggling like:', error);
-    }
-  };
-
-  const renderPostItem = ({ item }: { item: Post }) => (
-    <View style={[styles.postCard, { borderBottomColor: themeColors.icon + '20' }]}>
-      <View style={styles.postHeader}>
-        <View style={styles.postAvatarPlaceholder}>
-          {item.userPhotoURL ? (
-            <Image source={{ uri: item.userPhotoURL }} style={styles.postAvatar} />
-          ) : (
-            <IconSymbol name="person.fill" size={20} color="#fff" />
-          )}
-        </View>
-        <View>
-          <ThemedText type="defaultSemiBold">{item.userDisplayName}</ThemedText>
-          <ThemedText style={styles.postDate}>
-            {item.createdAt?.toDate().toLocaleDateString()}
-          </ThemedText>
-        </View>
+  const renderMovieItem = ({ item }: { item: Movie }) => (
+    <TouchableOpacity onPress={() => router.push(`/movie/${item.imdbID}`)} style={styles.movieItem}>
+      <Image source={{ uri: item.Poster }} style={styles.poster} />
+      <View style={styles.infoContainer}>
+        <StyledText type="body" style={styles.itemTitle}>{item.Title}</StyledText>
+        <StyledText type="caption">{item.Year} &middot; {item.imdbRating} ★</StyledText>
       </View>
-      
-      {item.content ? <ThemedText style={styles.postContent}>{item.content}</ThemedText> : null}
-      
-      {item.mediaUrl ? (
-        item.mediaType === 'video' ? (
-          <Video
-            source={{ uri: item.mediaUrl }}
-            style={styles.postMedia}
-            useNativeControls
-            resizeMode={ResizeMode.CONTAIN}
-            isLooping
-          />
-        ) : (
-          <Image source={{ uri: item.mediaUrl }} style={styles.postMedia} />
-        )
-      ) : item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={styles.postMedia} />
-      ) : null}
-      
-      <View style={styles.postActions}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => handleLikeToggle(item.id)}
-        >
-          <IconSymbol 
-            name={likedPosts.has(item.id) ? "heart.fill" : "heart"} 
-            size={20} 
-            color={likedPosts.has(item.id) ? "#E91E63" : themeColors.icon} 
-          />
-          <ThemedText style={styles.actionText}>{item.likesCount || 0}</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.id } })}
-        >
-          <IconSymbol name="bubble.left.fill" size={20} color={themeColors.icon} />
-          <ThemedText style={styles.actionText}>{item.commentsCount || 0}</ThemedText>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </TouchableOpacity>
   );
 
-  if (loading && !profile) {
-    return (
-      <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={themeColors.tint} />
-      </ThemedView>
-    );
+  if (loading) {
+    return <ActivityIndicator size="large" color={Colors.dark.text} style={styles.centered} />;
   }
 
-  if (!profile) {
+  if (!user) {
     return (
-      <ThemedView style={styles.centerContainer}>
-        <ThemedText>User not found</ThemedText>
-      </ThemedView>
+      <StyledView style={styles.centered}>
+        <StyledText>User not found.</StyledText>
+      </StyledView>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: profile.displayName, headerShown: true }} />
-      
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <View style={styles.profileHeader}>
-            <View style={styles.profileInfoSection}>
-              <View style={styles.profileImageContainer}>
-                {profile.photoURL ? (
-                  <Image source={{ uri: profile.photoURL }} style={styles.profileImage} />
-                ) : (
-                  <IconSymbol name="person.fill" size={60} color="#fff" />
-                )}
-              </View>
-              
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <ThemedText type="defaultSemiBold">{posts.length}</ThemedText>
-                  <ThemedText style={styles.statLabel}>Posts</ThemedText>
+    <StyledView style={styles.container}>
+        <FlatList
+            data={likedMovies}
+            renderItem={renderMovieItem}
+            keyExtractor={(item) => item.imdbID}
+            numColumns={NUM_COLUMNS}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={() => (
+                <View style={styles.header}>
+                    <StyledText type="title" style={styles.userName}>{user.displayName}</StyledText>
+                    <StyledText style={styles.userEmail}>{user.email}</StyledText>
+                    <StyledText type="body" style={styles.likedMoviesTitle}>Liked Movies</StyledText>
                 </View>
-                <View style={styles.statItem}>
-                  <ThemedText type="defaultSemiBold">{profile.followersCount || 0}</ThemedText>
-                  <ThemedText style={styles.statLabel}>Followers</ThemedText>
-                </View>
-                <View style={styles.statItem}>
-                  <ThemedText type="defaultSemiBold">{profile.followingCount || 0}</ThemedText>
-                  <ThemedText style={styles.statLabel}>Following</ThemedText>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.profileDetails}>
-              <ThemedText type="title">{profile.displayName}</ThemedText>
-              {profile.bio ? <ThemedText style={styles.bioText}>{profile.bio}</ThemedText> : null}
-              {profile.location ? (
-                <View style={styles.locationRow}>
-                  <IconSymbol name="map.fill" size={14} color={themeColors.icon} />
-                  <ThemedText style={styles.locationText}>{profile.location}</ThemedText>
-                </View>
-              ) : null}
-            </View>
-
-            {currentUser && uid !== currentUser.uid && (
-              <TouchableOpacity
-                style={[
-                  styles.followButton,
-                  { backgroundColor: isFollowing ? 'transparent' : themeColors.tint },
-                  isFollowing && { borderColor: themeColors.tint, borderWidth: 1 }
-                ]}
-                onPress={handleFollowToggle}
-              >
-                <ThemedText style={{ color: isFollowing ? themeColors.tint : '#fff', fontWeight: '600' }}>
-                  {isFollowing ? 'Following' : 'Follow'}
-                </ThemedText>
-              </TouchableOpacity>
             )}
-            
-            <View style={[styles.divider, { backgroundColor: themeColors.icon + '20' }]} />
-            <ThemedText type="defaultSemiBold" style={styles.postsTitle}>Posts</ThemedText>
-          </View>
-        }
-        renderItem={renderPostItem}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <ThemedText style={styles.emptyText}>No posts yet.</ThemedText>
-          </View>
-        }
-      />
-    </ThemedView>
+            ListEmptyComponent={() => (
+                <StyledView style={styles.centered}>
+                     <StyledText style={styles.emptyText}>No liked movies yet.</StyledText>
+                </StyledView>
+            )}
+            contentContainerStyle={{ flexGrow: 1 }}
+        />
+    </StyledView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 60,
+    backgroundColor: Colors.dark.background,
+    paddingHorizontal: 20,
   },
-  centerContainer: {
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  profileHeader: {
-    padding: 20,
-  },
-  profileInfoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    flex: 1,
-    justifyContent: 'space-around',
-    marginLeft: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    opacity: 0.6,
-  },
-  profileDetails: {
-    marginBottom: 20,
-  },
-  bioText: {
-    marginTop: 5,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    gap: 4,
-  },
-  locationText: {
-    fontSize: 14,
-    opacity: 0.6,
-  },
-  followButton: {
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
+  header: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginBottom: 15,
+  userName: {
+    fontSize: 28,
+    fontWeight: 'bold',
   },
-  postsTitle: {
-    fontSize: 18,
+  userEmail: {
+    fontSize: 16,
+    opacity: 0.7,
+    marginBottom: 30,
+  },
+  likedMoviesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
-  listContent: {
-    paddingBottom: 20,
-  },
-  postCard: {
-    padding: 20,
-    borderBottomWidth: 1,
-  },
-  postHeader: {
+  movieItem: {
+    width: POSTER_WIDTH,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  postAvatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    overflow: 'hidden',
+  poster: {
+    width: 60,
+    height: 90,
+    borderRadius: 4,
+    backgroundColor: Colors.dark.card,
   },
-  postAvatar: {
-    width: 36,
-    height: 36,
+  infoContainer: {
+    flex: 1,
+    marginLeft: 15,
   },
-  postDate: {
-    fontSize: 11,
-    opacity: 0.5,
-  },
-  postContent: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  postMedia: {
-    width: '100%',
-    height: 250,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: '#000',
-  },
-  postActions: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: 'center',
+  itemTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   emptyText: {
-    opacity: 0.5,
+    textAlign: 'center',
+    marginTop: 20,
+    opacity: 0.7,
   },
 });
