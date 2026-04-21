@@ -1,21 +1,28 @@
 import { db } from './firebase';
-import { doc, updateDoc, getDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
-const addToWatchlist = async (userId: string, movieId: string) => {
+export const addToWatchlist = async (userId: string, movieId: string) => {
   const userDocRef = doc(db, 'users', userId);
-  await updateDoc(userDocRef, {
-    watchlist: arrayUnion(movieId)
-  });
+  const userDoc = await getDoc(userDocRef);
+  if (userDoc.exists()) {
+    await updateDoc(userDocRef, {
+      watchlist: arrayUnion(movieId)
+    });
+  } else {
+    await setDoc(userDocRef, { 
+      watchlist: [movieId]
+    });
+  }
 };
 
-const removeFromWatchlist = async (userId: string, movieId: string) => {
+export const removeFromWatchlist = async (userId: string, movieId: string) => {
     const userDocRef = doc(db, 'users', userId);
     await updateDoc(userDocRef, {
       watchlist: arrayRemove(movieId)
     });
 };
 
-const getWatchlist = async (userId:string): Promise<string[]> => {
+export const getWatchlist = async (userId:string): Promise<any[]> => {
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
@@ -24,9 +31,3 @@ const getWatchlist = async (userId:string): Promise<string[]> => {
     }
     return [];
 }
-
-export const watchlistService = {
-  addToWatchlist,
-  removeFromWatchlist,
-  getWatchlist,
-};

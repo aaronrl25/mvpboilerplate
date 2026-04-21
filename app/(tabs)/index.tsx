@@ -5,7 +5,7 @@ import { StyledView } from '@/components/themed-view';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { watchlistService } from '@/services/watchlistService';
+import { addToWatchlist } from '@/services/watchlistService';
 
 export default function SwipeScreen() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -31,7 +31,7 @@ export default function SwipeScreen() {
 
   const onSwipe = (direction: 'left' | 'right' | 'up', movieId: string) => {
     if (currentUser && (direction === 'right' || direction === 'up')) {
-      watchlistService.addToWatchlist(currentUser.uid, movieId);
+      addToWatchlist(currentUser.uid, movieId);
     }
     setMovies((prevMovies) => prevMovies.slice(0, prevMovies.length - 1));
   };

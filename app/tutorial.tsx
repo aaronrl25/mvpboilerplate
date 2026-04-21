@@ -5,6 +5,7 @@ import { Colors } from '@/constants/theme';
 import { router } from 'expo-router';
 import React from 'react';
 import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity, Image } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,27 +14,36 @@ const slides = [
     key: '1',
     title: 'Swipe & Discover',
     description: 'Find your next favorite movie with a simple swipe.',
-    image: require('@/assets/images/swipe.png'), // Placeholder, we'll need to add this
+    lottie: require('@/assets/images/Cinemanewsanimation.json'), // Placeholder
   },
   {
     key: '2',
     title: 'Match with Friends',
     description: 'See your movie taste compatibility with others.',
-    image: require('@/assets/images/match.png'), // Placeholder
+    lottie: require('@/assets/images/Cinemanewsanimation.json'), // Placeholder
   },
   {
     key: '3',
     title: 'Build Your Watchlist',
     description: 'Save movies to watch later and never lose track.',
-    image: require('@/assets/images/watchlist.png'), // Placeholder
-  },
+    lottie: require('@/assets/images/Cinemanewsanimation.json'), // Placeholder
+    },
 ];
 
 export default function TutorialScreen() {
-  const renderItem = ({ item, index }: { item: typeof slides[0], index: number }) => {
+  const renderItem = ({ item, index }: { item: typeof slides[0] & { lottie?: any }, index: number }) => {
     return (
       <StyledView style={styles.slide}>
-        <Image source={item.image} style={styles.image} resizeMode="contain" />
+                {item.lottie ? (
+          <LottieView
+            source={item.lottie}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        ) : (
+          <Image source={item.image} style={styles.image} resizeMode="contain" />
+        )}
         <StyledText type="title" style={styles.title}>{item.title}</StyledText>
         <StyledText style={styles.description}>{item.description}</StyledText>
 
@@ -70,16 +80,22 @@ const styles = StyleSheet.create({
     height,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+        backgroundColor: Colors.dark.background,
+
   },
   image: {
     width: width * 0.7,
     height: width * 0.7,
     marginBottom: 60,
   },
+  lottie: {
+    width: width * 0.8,
+    height: width * 0.8,
+    marginBottom: 40,
+  },
   title: {
     fontSize: 28,
-    color: Colors.dark.text,
+    color: 'white',
     textAlign: 'center',
     marginBottom: 16,
   },

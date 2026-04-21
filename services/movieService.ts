@@ -27,10 +27,10 @@ export interface Movie {
 }
 
 // OMDb doesn't have a "popular" endpoint, so we'll search for a general term to get a list.
-export const getPopularMovies = async (): Promise<Movie[]> => {
+export const getPopularMovies = async (page: number = 1): Promise<Movie[]> => {
   try {
     // Searching for 'top' to get a list of popular-like movies.
-    const response = await client.get('/', { params: { s: 'top', type: 'movie' } });
+    const response = await client.get('/', { params: { s: 'top', type: 'movie', page } });
     if (response.data.Response === 'True') {
       return response.data.Search;
     }
@@ -52,5 +52,18 @@ export const getMovieDetails = async (id: string): Promise<Movie | null> => {
   } catch (error) {
     console.error('Error fetching movie details:', error);
     return null;
+  }
+};
+
+export const getRecommendations = async (title: string): Promise<Movie[]> => {
+  try {
+    const response = await client.get('/', { params: { s: title, type: 'movie' } });
+    if (response.data.Response === 'True') {
+      return response.data.Search;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return [];
   }
 };

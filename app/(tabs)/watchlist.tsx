@@ -5,7 +5,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, FlatList, View, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { watchlistService } from '@/services/watchlistService';
+import { getWatchlist, removeFromWatchlist } from '@/services/watchlistService';
 import { getMovieDetails, Movie } from '@/services/movieService';
 import { router, useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -31,11 +31,11 @@ export default function WatchlistScreen() {
 
     setLoading(true);
     try {
-      const movieIds = await watchlistService.getWatchlist(currentUser.uid);
-      const moviePromises = movieIds.map(id => getMovieDetails(id));
+      const movieIds = await getWatchlist(currentUser.uid);
+      const moviePromises = movieIds.map((id: string) => getMovieDetails(id));
       const movies = await Promise.all(moviePromises);
       // Filter out any potential nulls if a movie detail fetch fails
-      setWatchlistMovies(movies.filter(m => m) as Movie[]);
+      setWatchlistMovies(movies.filter((m): m is Movie => m !== null));
     } catch (error) {
       console.error("Failed to fetch watchlist:", error);
     } finally {
@@ -52,7 +52,7 @@ export default function WatchlistScreen() {
 
   const handleRemoveFromWatchlist = async (movieId: string) => {
     if (!currentUser) return;
-    await watchlistService.removeFromWatchlist(currentUser.uid, movieId);
+    await removeFromWatchlist(currentUser.uid, movieId);
     setWatchlistMovies(prev => prev.filter(movie => movie.imdbID !== movieId));
   };
 

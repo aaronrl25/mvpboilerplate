@@ -76,7 +76,7 @@ export default function SignupScreen() {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
-          placeholderTextColor="#fff"
+          placeholderTextColor="#ffffffff"
         />
         <TouchableOpacity
           style={styles.button}
